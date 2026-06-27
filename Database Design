@@ -1,0 +1,471 @@
+# Database Design
+
+## Friends Like These: Campus Key Edition
+
+---
+
+# 1. Introduction
+
+## Purpose
+
+This document describes the database design used by the Friends Like These: Campus Key Edition application.
+
+It explains the logical data model, entity relationships, data validation rules, Firebase data structure, and future relational database design.
+
+Although the current implementation uses Firebase Realtime Database, this document also presents a relational database design that could be implemented using PostgreSQL, MySQL, or SQL Server.
+
+---
+
+# 2. Database Overview
+
+The application stores information relating to:
+
+- Events
+- Teams
+- Participants
+- Scores
+- Administrators
+- Registration status
+
+The system uses Firebase Realtime Database for cloud storage and real-time synchronisation.
+
+---
+
+# 3. Database Architecture
+
+```
+                Friends Like These
+
+                        │
+
+        ┌───────────────┼───────────────┐
+
+        ▼                               ▼
+
+Firebase Realtime Database      Google Sheets
+
+        │
+
+        ▼
+
+Live Scoreboard
+```
+
+---
+
+# 4. Data Model
+
+The system consists of five primary entities.
+
+- Event
+- Team
+- Member
+- Score
+- Administrator
+
+---
+
+# 5. Entity Descriptions
+
+## Event
+
+Represents a competition event.
+
+Attributes
+
+| Attribute | Type | Description |
+|------------|------|-------------|
+| eventId | String | Unique event identifier |
+| eventName | String | Name of the event |
+| eventDate | Date | Competition date |
+| registrationDeadline | DateTime | Closing time |
+| status | String | Open or Closed |
+
+---
+
+## Team
+
+Represents a participating team.
+
+| Attribute | Type | Description |
+|------------|------|-------------|
+| teamId | String | Unique identifier |
+| teamName | String | Team name |
+| score | Integer | Current score |
+| position | Integer | Leaderboard position |
+
+---
+
+## Member
+
+Represents an individual participant.
+
+| Attribute | Type | Description |
+|------------|------|-------------|
+| memberId | String | Unique identifier |
+| fullName | String | Participant name |
+| email | String | Email address |
+| phone | String | Contact number |
+
+---
+
+## Administrator
+
+Represents an authorised organiser.
+
+| Attribute | Type | Description |
+|------------|------|-------------|
+| adminId | String | Administrator ID |
+| username | String | Login username |
+| password | String | Encrypted password |
+
+---
+
+## Score
+
+Represents a score update.
+
+| Attribute | Type | Description |
+|------------|------|-------------|
+| scoreId | String | Unique identifier |
+| teamId | String | Team being updated |
+| points | Integer | Points awarded |
+| timestamp | DateTime | Update time |
+
+---
+
+# 6. Relationships
+
+```
+Event
+
+1
+
+|
+
+|
+
+*
+
+Team
+
+1
+
+|
+
+|
+
+*
+
+Member
+
+1
+
+|
+
+|
+
+1
+
+Score
+```
+
+Relationship summary
+
+- One Event contains many Teams.
+- One Team contains many Members.
+- Each Team has one current Score.
+- One Administrator manages many Teams.
+
+---
+
+# 7. Entity Relationship Diagram
+
+```
++-------------+
+|    Event    |
++-------------+
+| eventId PK  |
+| eventName   |
+| eventDate   |
+| deadline    |
++-------------+
+       |
+       | 1
+       |
+       | *
++-------------+
+|    Team     |
++-------------+
+| teamId PK   |
+| teamName    |
+| score       |
+| position    |
++-------------+
+       |
+       | 1
+       |
+       | *
++-------------+
+|   Member    |
++-------------+
+| memberId PK |
+| fullName    |
+| email       |
+| phone       |
++-------------+
+```
+
+---
+
+# 8. Firebase Data Structure
+
+Example JSON
+
+```json
+{
+  "event": {
+    "eventName": "Friends Like These",
+    "registrationDeadline": "2026-08-20T18:00:00"
+  },
+
+  "teams": {
+
+    "team001": {
+
+      "teamName": "Dominant FC",
+
+      "score": 120,
+
+      "members": [
+
+        {
+          "name": "Alice"
+        },
+
+        {
+          "name": "John"
+        }
+
+      ]
+    },
+
+    "team002": {
+
+      "teamName": "The Winners",
+
+      "score": 95
+
+    }
+
+  }
+}
+```
+
+---
+
+# 9. Data Dictionary
+
+## Team Table
+
+| Field | Type | Required | Description |
+|---------|------|----------|-------------|
+| teamId | String | Yes | Unique ID |
+| teamName | String | Yes | Team name |
+| score | Integer | Yes | Current score |
+| position | Integer | Yes | Leaderboard ranking |
+
+---
+
+## Member Table
+
+| Field | Type | Required |
+|---------|------|----------|
+| memberId | String | Yes |
+| fullName | String | Yes |
+| email | String | No |
+| phone | String | No |
+
+---
+
+# 10. Validation Rules
+
+## Team
+
+- Team name cannot be empty.
+- Team name must be unique.
+- Score cannot be negative.
+
+---
+
+## Member
+
+- Full name required.
+- Duplicate members not allowed.
+
+---
+
+## Event
+
+- Registration deadline must be after event creation.
+- Event must have a name.
+
+---
+
+# 11. Normalisation
+
+A relational implementation would follow Third Normal Form (3NF).
+
+Benefits include:
+
+- Reduced redundancy
+- Improved consistency
+- Easier maintenance
+- Better scalability
+
+---
+
+# 12. Future SQL Schema
+
+## Event
+
+```sql
+Event
+
+event_id
+
+event_name
+
+event_date
+
+registration_deadline
+
+status
+```
+
+---
+
+## Team
+
+```sql
+Team
+
+team_id
+
+event_id
+
+team_name
+
+score
+
+position
+```
+
+---
+
+## Member
+
+```sql
+Member
+
+member_id
+
+team_id
+
+full_name
+
+email
+
+phone
+```
+
+---
+
+## Administrator
+
+```sql
+Administrator
+
+admin_id
+
+username
+
+password_hash
+```
+
+---
+
+# 13. Backup Strategy
+
+Current
+
+- Firebase cloud persistence
+
+Future
+
+- Daily database backups
+- Weekly snapshots
+- Disaster recovery plan
+
+---
+
+# 14. Security
+
+Current implementation
+
+- Cloud-hosted data
+- Administrator authentication
+
+Recommended improvements
+
+- Password hashing
+- Encrypted credentials
+- Role-based access control
+- Database rules
+- Audit logs
+
+---
+
+# 15. Scalability
+
+The database can be extended to support:
+
+- Multiple competitions
+- Multiple campuses
+- Historical events
+- Team statistics
+- Player statistics
+- Match schedules
+- Attendance
+- Notifications
+
+---
+
+# 16. Performance
+
+The database has been designed to support:
+
+- Fast score retrieval
+- Real-time updates
+- Efficient team lookup
+- Minimal network latency
+
+---
+
+# 17. Future Improvements
+
+- PostgreSQL migration
+- Stored procedures
+- Database indexing
+- Audit tables
+- Soft deletes
+- Historical score tracking
+- Analytics warehouse
+
+---
+
+# 18. Summary
+
+The Friends Like These database provides a flexible and scalable data model capable of supporting real-time event management.
+
+The Firebase implementation enables immediate synchronisation between clients while maintaining a simple data structure. The accompanying relational design demonstrates how the application can evolve into an enterprise-grade solution using a traditional SQL database.
