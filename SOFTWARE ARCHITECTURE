@@ -1,0 +1,491 @@
+# Software Architecture
+
+## Friends Like These: Campus Key Edition
+
+---
+
+# 1. Introduction
+
+## Purpose
+
+This document describes the overall software architecture of the Friends Like These: Campus Key Edition application.
+
+It explains the architectural decisions, design principles, major software components, interactions between components, and the technologies used to build the system.
+
+The objective is to provide developers with a comprehensive understanding of the system architecture to support maintenance, scalability, and future enhancements.
+
+---
+
+# 2. System Overview
+
+Friends Like These is a cloud-based event management and live scoring platform designed to support Campus Key competitions.
+
+The application enables:
+
+* Live score management
+* Real-time leaderboard updates
+* Team registration
+* Event administration
+* Countdown management
+* QR code registration
+* Cloud synchronisation
+
+The system follows a layered architecture with clearly separated responsibilities.
+
+---
+
+# 3. Architectural Style
+
+The application adopts a combination of:
+
+* Layered Architecture
+* Model–View–Controller (MVC)
+* Service-Oriented Design
+* Event-Driven Architecture
+
+These patterns improve maintainability, scalability, and modularity.
+
+---
+
+# 4. High-Level Architecture
+
+```text
+                    Users
+                      │
+                      ▼
+             Presentation Layer
+          (HTML, CSS, JavaScript)
+                      │
+                      ▼
+             Controller Layer
+      (Event & UI Controllers)
+                      │
+                      ▼
+             Service Layer
+   ┌────────┬────────┬────────┬────────┐
+   ▼        ▼        ▼        ▼
+Team   Score   Registration Firebase
+Service Service Service     Service
+                      │
+                      ▼
+             External Services
+      ┌──────────────┬──────────────┐
+      ▼              ▼              ▼
+ Google Forms   Google Sheets   Firebase
+```
+
+---
+
+# 5. Layered Architecture
+
+## Presentation Layer
+
+Responsible for:
+
+* User interface
+* User interaction
+* Rendering leaderboard
+* Displaying countdown
+* Displaying QR code
+* Displaying administrator interface
+
+Technologies
+
+* HTML5
+* CSS3
+* JavaScript
+
+---
+
+## Controller Layer
+
+Acts as the communication layer between the frontend and backend services.
+
+Responsibilities include:
+
+* Receiving user requests
+* Calling services
+* Returning responses
+* Updating the interface
+
+Controllers include:
+
+* Admin Controller
+* Registration Controller
+* Scoreboard Controller
+
+---
+
+## Service Layer
+
+Contains the business logic.
+
+Responsibilities include:
+
+* Score calculations
+* Registration processing
+* Team management
+* Firebase communication
+* Google Sheets communication
+* Countdown calculations
+
+Services include:
+
+* Team Service
+* Score Service
+* Registration Service
+* Firebase Service
+* Google Sheets Service
+* Countdown Service
+* QR Code Service
+
+---
+
+## Data Layer
+
+Responsible for data persistence.
+
+Current implementation:
+
+* Firebase Realtime Database
+
+Future options:
+
+* PostgreSQL
+* MySQL
+* MongoDB
+
+---
+
+# 6. Design Principles
+
+The architecture follows several software engineering principles.
+
+## Single Responsibility Principle (SRP)
+
+Each class performs one task.
+
+Example:
+
+* TeamService manages teams.
+* ScoreService manages scores.
+
+---
+
+## Open/Closed Principle (OCP)
+
+Components should be open for extension but closed for modification.
+
+New functionality should be added through additional services rather than modifying existing ones.
+
+---
+
+## Liskov Substitution Principle (LSP)
+
+Future implementations should allow service implementations to be replaced without affecting dependent components.
+
+---
+
+## Interface Segregation Principle (ISP)
+
+Interfaces should expose only the operations required by their clients.
+
+---
+
+## Dependency Inversion Principle (DIP)
+
+High-level components should depend on abstractions rather than concrete implementations.
+
+---
+
+# 7. Major Components
+
+## Team Management Component
+
+Responsibilities
+
+* Create teams
+* Remove teams
+* Store members
+* Maintain scores
+
+---
+
+## Leaderboard Component
+
+Responsibilities
+
+* Sort teams
+* Assign rankings
+* Highlight top three teams
+* Render scoreboard
+
+---
+
+## Registration Component
+
+Responsibilities
+
+* Process registrations
+* Validate data
+* Import Google Forms responses
+* Synchronise with Firebase
+
+---
+
+## Administration Component
+
+Responsibilities
+
+* Authentication
+* Team management
+* Score management
+* Competition reset
+
+---
+
+## Synchronisation Component
+
+Responsibilities
+
+* Listen for Firebase updates
+* Import Google Sheets data
+* Refresh leaderboard
+
+---
+
+# 8. Component Diagram
+
+```text
+Presentation Layer
+        │
+        ▼
+Controllers
+        │
+        ▼
+Services
+ ├── Team Service
+ ├── Score Service
+ ├── Registration Service
+ ├── Countdown Service
+ ├── Firebase Service
+ └── Google Sheets Service
+        │
+        ▼
+Cloud Services
+ ├── Firebase
+ ├── Google Sheets
+ └── Google Forms
+```
+
+---
+
+# 9. Data Flow
+
+## Registration Flow
+
+```text
+Participant
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Registration Service
+
+↓
+
+Team Object
+
+↓
+
+Firebase
+
+↓
+
+Scoreboard
+```
+
+---
+
+## Score Update Flow
+
+```text
+Administrator
+
+↓
+
+Admin Controller
+
+↓
+
+Score Service
+
+↓
+
+Firebase
+
+↓
+
+Realtime Listener
+
+↓
+
+Updated Leaderboard
+```
+
+---
+
+# 10. Deployment Architecture
+
+```text
+Browser
+
+↓
+
+Netlify
+
+↓
+
+JavaScript Application
+
+↓
+
+Firebase Realtime Database
+
+↓
+
+Google Cloud Services
+```
+
+---
+
+# 11. Security Architecture
+
+Current security includes:
+
+* Administrator password protection
+* Firebase access
+* HTTPS deployment
+
+Recommended future improvements:
+
+* Firebase Authentication
+* OAuth
+* Role-based authorisation
+* Password hashing
+* API key management
+* Environment variables
+
+---
+
+# 12. Scalability
+
+The architecture supports future expansion including:
+
+* Multiple competitions
+* Multiple administrators
+* Team statistics
+* User profiles
+* Tournament brackets
+* Historical events
+* AI-powered analytics
+
+---
+
+# 13. Maintainability
+
+The architecture promotes maintainability through:
+
+* Modular services
+* Clear separation of concerns
+* Reusable components
+* Consistent naming conventions
+* Layered design
+
+---
+
+# 14. Extensibility
+
+Future modules can be added with minimal impact on existing functionality.
+
+Potential additions include:
+
+* Notification Service
+* Reporting Service
+* Analytics Service
+* Authentication Service
+* Export Service
+* Payment Service
+
+---
+
+# 15. Quality Attributes
+
+The architecture was designed to achieve the following software quality attributes:
+
+## Performance
+
+* Real-time updates
+* Efficient rendering
+* Lightweight frontend
+
+---
+
+## Reliability
+
+* Cloud persistence
+* Automatic synchronisation
+
+---
+
+## Scalability
+
+* Modular services
+* Cloud infrastructure
+
+---
+
+## Usability
+
+* Responsive interface
+* Simple administration
+* Live feedback
+
+---
+
+## Maintainability
+
+* Layered architecture
+* Modular design
+* Service separation
+
+---
+
+# 16. Future Architecture
+
+Future versions could migrate to a full enterprise architecture using:
+
+* Spring Boot
+* REST APIs
+* PostgreSQL
+* Docker
+* Kubernetes
+* JWT Authentication
+* Redis
+* CI/CD pipelines
+* Microservices
+
+---
+
+# 17. Summary
+
+The Friends Like These architecture follows a modular layered design that separates presentation, business logic, and data management. By combining MVC principles, service-oriented design, and cloud-based infrastructure, the system provides a maintainable, scalable, and responsive platform for managing live competitions.
+
+The architecture is intentionally extensible, allowing additional features and services to be incorporated with minimal changes to existing components, making it suitable for future growth into a comprehensive event management platform.
