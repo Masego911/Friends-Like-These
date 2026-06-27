@@ -1,0 +1,713 @@
+# Backend Documentation
+
+## Friends Like These: Campus Key Edition
+
+---
+
+# 1. Introduction
+
+## Purpose
+
+This document describes the backend architecture of the **Friends Like These: Campus Key Edition** application.
+
+It explains how the backend services manage business logic, communicate with cloud services, synchronise application data, and support the frontend.
+
+Although the original application uses Firebase and Google cloud services instead of a traditional backend server, this document describes the logical backend architecture that powers the application.
+
+---
+
+# 2. Backend Overview
+
+The backend is responsible for:
+
+* Managing competition data
+* Maintaining team information
+* Managing scores
+* Synchronising with Firebase
+* Importing registrations from Google Sheets
+* Communicating with Google Forms
+* Generating leaderboard data
+* Managing registration deadlines
+* Providing data to the frontend
+
+---
+
+# 3. Backend Architecture
+
+```
+                    Frontend
+                        │
+                        │
+          ------------------------------
+          │                            │
+          ▼                            ▼
+ Event Controllers             Authentication
+          │
+          ▼
+     Service Layer
+          │
+ ┌────────┼────────┬─────────┬──────────┐
+ ▼        ▼        ▼         ▼          ▼
+Team   Score   Countdown  Registration Firebase
+Service Service Service    Service      Service
+          │
+          ▼
+ Google Sheets API
+          │
+          ▼
+ Firebase Realtime Database
+```
+
+---
+
+# 4. Architectural Pattern
+
+The backend follows a layered architecture.
+
+```
+Presentation Layer
+        │
+        ▼
+Controller Layer
+        │
+        ▼
+Business Logic Layer
+        │
+        ▼
+Data Access Layer
+        │
+        ▼
+Cloud Services
+```
+
+Each layer has a single responsibility.
+
+---
+
+# 5. Design Principles
+
+The backend follows several software engineering principles.
+
+## Separation of Concerns
+
+Each service performs one task.
+
+Examples
+
+* ScoreService only manages scores.
+* RegistrationService only manages registrations.
+* FirebaseService only communicates with Firebase.
+
+---
+
+## Single Responsibility Principle
+
+Each class has one responsibility.
+
+Example
+
+```
+ScoreService
+
+Only updates scores.
+```
+
+instead of
+
+```
+ScoreService
+
+Updates scores
+
+Reads Google Sheets
+
+Generates QR codes
+
+Authenticates users
+```
+
+---
+
+## Encapsulation
+
+Business logic is hidden behind service methods.
+
+Controllers never manipulate data directly.
+
+---
+
+## Loose Coupling
+
+Services communicate through interfaces rather than depending directly on one another.
+
+This improves maintainability and testing.
+
+---
+
+# 6. Backend Components
+
+## Event Controller
+
+Responsibilities
+
+* Receives frontend requests
+* Calls business services
+* Returns responses
+
+Example responsibilities
+
+* Load leaderboard
+* Add team
+* Remove team
+* Update score
+
+---
+
+## Team Service
+
+Purpose
+
+Manages team data.
+
+Responsibilities
+
+* Create teams
+* Delete teams
+* Retrieve teams
+* Validate team information
+
+Methods
+
+```
+addTeam()
+
+removeTeam()
+
+findTeam()
+
+getTeams()
+
+teamExists()
+```
+
+---
+
+## Score Service
+
+Purpose
+
+Controls all scoring logic.
+
+Responsibilities
+
+* Increase score
+* Decrease score
+* Reset competition
+* Calculate rankings
+
+Methods
+
+```
+increaseScore()
+
+decreaseScore()
+
+resetScores()
+
+sortLeaderboard()
+```
+
+---
+
+## Registration Service
+
+Purpose
+
+Processes new registrations.
+
+Responsibilities
+
+* Import registrations
+* Validate team data
+* Prevent duplicates
+* Create Team objects
+
+Methods
+
+```
+loadRegistrations()
+
+createTeam()
+
+validateRegistration()
+
+registerTeam()
+```
+
+---
+
+## Firebase Service
+
+Purpose
+
+Communicates with Firebase Realtime Database.
+
+Responsibilities
+
+* Save teams
+* Save scores
+* Retrieve scores
+* Listen for updates
+
+Methods
+
+```
+connect()
+
+getTeams()
+
+saveTeam()
+
+updateScore()
+
+deleteTeam()
+
+listenForChanges()
+```
+
+---
+
+## Google Sheets Service
+
+Purpose
+
+Retrieves registration information.
+
+Responsibilities
+
+* Read spreadsheet
+* Parse rows
+* Convert rows into Team objects
+
+Methods
+
+```
+loadSheet()
+
+parseRows()
+
+extractMembers()
+
+convertToTeams()
+```
+
+---
+
+## Countdown Service
+
+Purpose
+
+Calculates registration countdown.
+
+Responsibilities
+
+* Calculate remaining time
+* Determine registration status
+
+Methods
+
+```
+getRemainingTime()
+
+isRegistrationClosed()
+
+formatTime()
+```
+
+---
+
+## QR Code Service
+
+Purpose
+
+Provides registration QR code.
+
+Responsibilities
+
+* Generate QR image
+* Link QR to registration form
+
+Methods
+
+```
+generateQRCode()
+
+getRegistrationURL()
+```
+
+---
+
+## Authentication Service
+
+Purpose
+
+Controls administrator access.
+
+Responsibilities
+
+* Validate administrator password
+* Create authenticated session
+* Reject invalid access
+
+Methods
+
+```
+login()
+
+logout()
+
+validatePassword()
+```
+
+---
+
+# 7. Domain Model
+
+The backend manages the following entities.
+
+## Event
+
+Attributes
+
+* Event ID
+* Event Name
+* Registration Deadline
+* Teams
+
+---
+
+## Team
+
+Attributes
+
+* Team ID
+* Team Name
+* Members
+* Score
+
+---
+
+## Member
+
+Attributes
+
+* Member ID
+* Full Name
+
+---
+
+# 8. Firebase Integration
+
+Firebase Realtime Database stores competition information.
+
+Example structure
+
+```json
+{
+  "scores": {
+    "team001": {
+      "name": "Dominant FC",
+      "score": 80
+    },
+    "team002": {
+      "name": "The All Stars",
+      "score": 65
+    }
+  }
+}
+```
+
+Benefits
+
+* Real-time updates
+* Cloud persistence
+* Multi-device synchronisation
+* Automatic refresh
+
+---
+
+# 9. Google Sheets Integration
+
+Google Sheets stores registration information submitted through Google Forms.
+
+Workflow
+
+```
+Participant
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Google Sheets API
+
+↓
+
+Registration Service
+
+↓
+
+Team Objects
+```
+
+---
+
+# 10. Business Rules
+
+The backend enforces several business rules.
+
+Examples
+
+* Team names must be unique.
+* Scores cannot become negative.
+* Registration closes after the deadline.
+* Only administrators may modify scores.
+* Teams require at least one member.
+
+---
+
+# 11. Error Handling
+
+The backend validates all operations.
+
+Examples
+
+Invalid password
+
+↓
+
+Display authentication error
+
+---
+
+Duplicate team
+
+↓
+
+Reject registration
+
+---
+
+Firebase unavailable
+
+↓
+
+Display connection error
+
+---
+
+Google Sheets unavailable
+
+↓
+
+Retry connection
+
+---
+
+# 12. Data Validation
+
+Validation occurs before any data is saved.
+
+Examples
+
+Team
+
+* Name cannot be empty.
+* Team name must be unique.
+
+Members
+
+* Name cannot be blank.
+
+Scores
+
+* Must be numeric.
+* Cannot be negative.
+
+---
+
+# 13. Security
+
+Current implementation
+
+* Administrator password protection
+* Cloud database
+
+Recommended improvements
+
+* Firebase Authentication
+* Role-based access control
+* Password hashing
+* HTTPS enforcement
+* Environment variables
+* API key protection
+
+---
+
+# 14. Performance
+
+The backend has been designed to minimise unnecessary processing.
+
+Strategies include
+
+* Real-time listeners
+* Event-driven updates
+* Incremental score updates
+* Efficient sorting
+* Cloud synchronisation
+
+---
+
+# 15. Scalability
+
+The current architecture supports future expansion.
+
+Possible extensions include
+
+* Multiple events
+* Multiple scoreboards
+* Team statistics
+* User accounts
+* Tournament brackets
+* Historical competitions
+* Analytics dashboards
+
+---
+
+# 16. Backend Workflow
+
+## Updating a Score
+
+```
+Administrator
+
+↓
+
+Admin Controller
+
+↓
+
+Score Service
+
+↓
+
+Firebase Service
+
+↓
+
+Firebase Database
+
+↓
+
+Realtime Listener
+
+↓
+
+Frontend Scoreboard
+
+↓
+
+Updated Leaderboard
+```
+
+---
+
+## Registering a Team
+
+```
+Participant
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Google Sheets API
+
+↓
+
+Registration Service
+
+↓
+
+Create Team Object
+
+↓
+
+Firebase
+
+↓
+
+Live Scoreboard
+```
+
+---
+
+# 17. Future Backend Improvements
+
+Potential enhancements include
+
+* REST API
+* Spring Boot backend
+* JWT authentication
+* PostgreSQL database
+* Docker deployment
+* Kubernetes orchestration
+* WebSocket communication
+* Redis caching
+* Audit logging
+* Automated testing
+
+---
+
+# 18. Testing Strategy
+
+The backend should be tested using:
+
+## Unit Testing
+
+* TeamService
+* ScoreService
+* RegistrationService
+
+## Integration Testing
+
+* Firebase integration
+* Google Sheets integration
+
+## System Testing
+
+* End-to-end registration
+* Live score updates
+* Administrator workflow
+
+---
+
+# 19. Summary
+
+The backend provides the core business logic for the Friends Like These application.
+
+It is responsible for maintaining competition data, enforcing business rules, synchronising cloud services, and supporting real-time interaction between administrators and participants.
+
+The layered architecture, modular services, and cloud integration provide a scalable and maintainable foundation that can be extended into a full enterprise event management platform.
