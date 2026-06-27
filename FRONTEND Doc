@@ -1,0 +1,468 @@
+# Frontend Documentation
+
+## Friends Like These: Campus Key Edition
+
+---
+
+# 1. Introduction
+
+## Purpose
+
+This document describes the frontend architecture of the **Friends Like These: Campus Key Edition** application.
+
+It explains how the user interface is organised, how data is presented, how user interactions are handled, and how the frontend communicates with external services.
+
+The goal of this documentation is to provide developers with a clear understanding of the application's presentation layer and make future maintenance and enhancement easier.
+
+---
+
+# 2. Frontend Overview
+
+The frontend is responsible for:
+
+* Displaying the live scoreboard
+* Rendering registered teams
+* Displaying rankings
+* Managing the administrator interface
+* Displaying the registration countdown
+* Displaying the registration QR code
+* Receiving live score updates
+* Providing a responsive experience across devices
+
+---
+
+# 3. Frontend Technology Stack
+
+| Technology        | Purpose                        |
+| ----------------- | ------------------------------ |
+| HTML5             | Page structure                 |
+| CSS3              | Styling and responsive layouts |
+| JavaScript (ES6)  | Application logic              |
+| Firebase          | Real-time score updates        |
+| Google Sheets API | Team registration data         |
+| Google Forms      | Team registration              |
+| QR Code API       | Registration QR generation     |
+
+---
+
+# 4. User Interface Overview
+
+The frontend consists of three primary interfaces.
+
+## 4.1 Live Scoreboard
+
+The public interface displayed during the event.
+
+Responsibilities:
+
+* Display rankings
+* Display scores
+* Display team members
+* Display countdown
+* Display QR code
+* Animate score updates
+
+---
+
+## 4.2 Administrator Login
+
+A secure page allowing authorised users to access the administration panel.
+
+Responsibilities:
+
+* Password validation
+* Access control
+* Error feedback
+
+---
+
+## 4.3 Administrator Dashboard
+
+Provides event management functionality.
+
+Responsibilities:
+
+* Add teams
+* Remove teams
+* Increase scores
+* Deduct scores
+* Reset competition
+* Reload registration data
+
+---
+
+# 5. Component Architecture
+
+```
+Application
+
+│
+
+├── Header
+
+├── Leaderboard
+
+│ ├── Team Card
+
+│ ├── Rank Display
+
+│ └── Score Display
+
+├── Countdown Timer
+
+├── QR Registration
+
+├── Login Screen
+
+└── Admin Dashboard
+```
+
+---
+
+# 6. Component Descriptions
+
+## Header
+
+Displays:
+
+* Event title
+* Branding
+* Live indicator
+* Administrator access button
+
+Responsibilities:
+
+* Branding
+* Navigation
+* User orientation
+
+---
+
+## Leaderboard
+
+Displays:
+
+* Team rankings
+* Scores
+* Team members
+
+Responsibilities:
+
+* Sort rankings
+* Render team cards
+* Highlight top three teams
+* Animate score changes
+
+---
+
+## Team Card
+
+Displays:
+
+* Position
+* Team name
+* Members
+* Current score
+
+Responsibilities:
+
+* Present team information
+* Display score updates
+* Highlight ranking
+
+---
+
+## Countdown Timer
+
+Displays:
+
+* Hours
+* Minutes
+* Seconds
+
+Responsibilities:
+
+* Calculate remaining time
+* Update every second
+* Display registration status
+
+---
+
+## QR Registration Component
+
+Displays:
+
+* Registration QR code
+
+Responsibilities:
+
+* Generate QR image
+* Link to registration form
+
+---
+
+## Administrator Dashboard
+
+Displays:
+
+* Teams
+* Current scores
+* Management buttons
+
+Responsibilities:
+
+* Update scores
+* Manage teams
+* Reset competition
+
+---
+
+# 7. Responsive Design
+
+The application supports multiple screen sizes.
+
+## Desktop
+
+Optimised for:
+
+* Laptops
+* Desktop monitors
+
+---
+
+## Tablet
+
+Adjustments include:
+
+* Flexible layouts
+* Larger controls
+* Improved spacing
+
+---
+
+## Mobile
+
+Optimisations:
+
+* Vertical layouts
+* Touch-friendly buttons
+* Reduced spacing
+* Responsive typography
+
+---
+
+## Television Display
+
+Optimised for:
+
+* Large screens
+* Projectors
+* Event displays
+
+Features:
+
+* Large typography
+* High contrast
+* Readable rankings
+
+---
+
+# 8. Styling Guide
+
+## Typography
+
+Primary fonts:
+
+* Black Han Sans
+* Barlow
+* Barlow Condensed
+
+Purpose:
+
+* High readability
+* Broadcast-style appearance
+
+---
+
+## Colour Palette
+
+Primary
+
+* Teal
+
+Secondary
+
+* Orange
+
+Background
+
+* Dark Navy
+
+Highlights
+
+* Gold
+* Silver
+* Bronze
+
+Purpose:
+
+* High contrast
+* Event branding
+* Ranking emphasis
+
+---
+
+# 9. Animations
+
+The interface uses subtle animations to improve user experience.
+
+Examples:
+
+* Loading spinner
+* Score flash
+* Score increment animation
+* Live indicator pulse
+* Hover effects
+
+Purpose:
+
+* Improve feedback
+* Increase engagement
+* Highlight important events
+
+---
+
+# 10. User Flow
+
+## Audience
+
+```
+Open Website
+
+↓
+
+View Live Leaderboard
+
+↓
+
+Watch Scores Update
+
+↓
+
+Scan QR Code
+
+↓
+
+Register Team
+```
+
+---
+
+## Administrator
+
+```
+Open Website
+
+↓
+
+Login
+
+↓
+
+Admin Dashboard
+
+↓
+
+Manage Teams
+
+↓
+
+Update Scores
+
+↓
+
+Firebase Synchronisation
+
+↓
+
+Leaderboard Updates
+```
+
+---
+
+# 11. Frontend Responsibilities
+
+The frontend is responsible for:
+
+* Rendering the interface
+* Handling user interaction
+* Displaying live scores
+* Displaying countdown
+* Displaying rankings
+* Displaying registration information
+
+The frontend is **not** responsible for:
+
+* Persistent data storage
+* Authentication logic
+* Business rules
+* Database management
+
+These responsibilities belong to backend services.
+
+---
+
+# 12. Accessibility Considerations
+
+The interface was designed with usability in mind.
+
+Features include:
+
+* High colour contrast
+* Large typography
+* Responsive layouts
+* Touch-friendly controls
+* Clear visual hierarchy
+
+Future improvements may include:
+
+* Keyboard navigation
+* Screen reader support
+* ARIA labels
+* Improved accessibility compliance
+
+---
+
+# 13. Performance Considerations
+
+The frontend has been designed to:
+
+* Minimise page reloads
+* Update scores in real time
+* Reduce unnecessary network requests
+* Optimise rendering performance
+
+---
+
+# 14. Future Frontend Enhancements
+
+Potential future improvements include:
+
+* Dark/Light theme toggle
+* Team logos
+* Animated leaderboards
+* Sound effects
+* Multiple competitions
+* Live statistics
+* Search functionality
+* Internationalisation
+* Offline support
+* Progressive Web App (PWA)
+
+---
+
+# 15. Summary
+
+The frontend provides a responsive, real-time interface for managing and displaying the Friends Like These competition.
+
+It focuses on usability, responsiveness, live data presentation, and a clean event experience while integrating seamlessly with backend cloud services.
