@@ -1,0 +1,596 @@
+# API Documentation
+
+# Friends Like These: Campus Key Edition
+
+---
+
+# Overview
+
+This document describes the APIs and external services used by the Friends Like These: Campus Key Edition application.
+
+The application integrates with several cloud-based services to provide real-time functionality without requiring a traditional backend server.
+
+Current integrations include:
+
+- Firebase Realtime Database
+- Google Forms
+- Google Sheets
+- QR Code Generation
+
+---
+
+# API Architecture
+
+```
+Browser
+
+↓
+
+JavaScript Application
+
+↓
+
+Firebase Realtime Database
+
+↓
+
+Google Forms
+
+↓
+
+Google Sheets
+```
+
+---
+
+# External APIs
+
+## Firebase Realtime Database
+
+### Purpose
+
+Stores and synchronises application data in real time.
+
+### Responsibilities
+
+- Store teams
+- Store scores
+- Store event information
+- Synchronise changes
+- Notify connected clients
+
+---
+
+### Base URL
+
+```
+https://<project-id>.firebaseio.com/
+```
+
+---
+
+### Data Structure
+
+```
+teams/
+
+event/
+
+scores/
+
+settings/
+```
+
+---
+
+## Retrieve Teams
+
+### Method
+
+```
+GET
+```
+
+### Endpoint
+
+```
+/teams.json
+```
+
+### Description
+
+Retrieves all registered teams.
+
+---
+
+### Example Response
+
+```json
+{
+  "team001": {
+    "teamName": "Dominant FC",
+    "score": 80
+  },
+
+  "team002": {
+    "teamName": "The Winners",
+    "score": 65
+  }
+}
+```
+
+---
+
+## Create Team
+
+### Method
+
+```
+POST
+```
+
+### Endpoint
+
+```
+/teams.json
+```
+
+### Description
+
+Creates a new team.
+
+---
+
+### Request Example
+
+```json
+{
+    "teamName":"Dominant FC",
+    "score":0
+}
+```
+
+---
+
+### Response
+
+```json
+{
+    "name":"team001"
+}
+```
+
+---
+
+## Update Team Score
+
+### Method
+
+```
+PATCH
+```
+
+### Endpoint
+
+```
+/teams/{teamId}.json
+```
+
+---
+
+### Example Request
+
+```json
+{
+    "score":120
+}
+```
+
+---
+
+### Example Response
+
+```json
+{
+    "score":120
+}
+```
+
+---
+
+## Delete Team
+
+### Method
+
+```
+DELETE
+```
+
+### Endpoint
+
+```
+/teams/{teamId}.json
+```
+
+---
+
+### Description
+
+Deletes the selected team.
+
+---
+
+# Google Forms
+
+## Purpose
+
+Collect participant registrations.
+
+Participants complete an online registration form.
+
+The responses are automatically stored inside Google Sheets.
+
+---
+
+### Registration Workflow
+
+```
+Participant
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Application
+```
+
+---
+
+# Google Sheets API
+
+## Purpose
+
+Imports registration data submitted through Google Forms.
+
+---
+
+### Responsibilities
+
+- Read spreadsheet
+- Retrieve participant data
+- Convert rows into Team objects
+
+---
+
+### API Endpoint
+
+```
+https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}
+```
+
+---
+
+### Method
+
+```
+GET
+```
+
+---
+
+### Example Response
+
+```json
+{
+ "values":[
+   [
+      "Dominant FC",
+      "Alice",
+      "John"
+   ]
+ ]
+}
+```
+
+---
+
+# QR Code Integration
+
+## Purpose
+
+Provides quick access to registration.
+
+The QR code redirects participants to the Google Form.
+
+---
+
+### Registration URL
+
+```
+https://forms.google.com/...
+```
+
+---
+
+### Workflow
+
+```
+Participant
+
+↓
+
+Scan QR Code
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Application
+```
+
+---
+
+# Internal Services
+
+The application is divided into several logical services.
+
+---
+
+## Team Service
+
+Responsibilities
+
+- Create team
+- Remove team
+- Retrieve teams
+
+---
+
+## Score Service
+
+Responsibilities
+
+- Increase score
+- Decrease score
+- Reset competition
+- Calculate rankings
+
+---
+
+## Registration Service
+
+Responsibilities
+
+- Import registrations
+- Validate data
+- Create Team objects
+
+---
+
+## Firebase Service
+
+Responsibilities
+
+- Connect to Firebase
+- Save data
+- Retrieve data
+- Listen for updates
+
+---
+
+## Countdown Service
+
+Responsibilities
+
+- Calculate remaining registration time
+- Format countdown
+- Detect registration closure
+
+---
+
+## Authentication Service
+
+Responsibilities
+
+- Validate administrator password
+- Manage administrator access
+
+---
+
+# Authentication
+
+Current implementation
+
+- Administrator password
+
+Future implementation
+
+- Firebase Authentication
+- OAuth 2.0
+- JWT
+- Role-based access control
+
+---
+
+# Error Handling
+
+Common errors include:
+
+| Status | Description |
+|---------|-------------|
+| 200 | Request successful |
+| 400 | Invalid request |
+| 401 | Unauthorised |
+| 403 | Forbidden |
+| 404 | Resource not found |
+| 500 | Internal server error |
+
+---
+
+# Data Validation
+
+The application validates:
+
+## Team
+
+- Team name required
+- Team name unique
+
+---
+
+## Score
+
+- Numeric values only
+- Cannot be negative
+
+---
+
+## Registration
+
+- Required fields completed
+- Duplicate registrations prevented
+
+---
+
+# Security
+
+Current security features
+
+- Administrator login
+- Firebase security rules
+- HTTPS
+
+Recommended improvements
+
+- Password hashing
+- Environment variables
+- Secure API key storage
+- OAuth authentication
+- Role-based permissions
+
+---
+
+# Performance
+
+The APIs have been designed to provide:
+
+- Real-time synchronisation
+- Low latency
+- Minimal network traffic
+- Efficient updates
+
+Firebase listeners ensure only changed data is transferred rather than reloading the complete dataset.
+
+---
+
+# Future API Enhancements
+
+Future versions may expose a custom REST API supporting:
+
+```
+GET /teams
+
+POST /teams
+
+PUT /teams/{id}
+
+DELETE /teams/{id}
+
+GET /leaderboard
+
+GET /event
+
+POST /login
+```
+
+Potential technologies include:
+
+- Spring Boot
+- ASP.NET Core
+- Node.js (Express)
+- PostgreSQL
+- JWT Authentication
+
+---
+
+# API Workflow
+
+## Team Registration
+
+```
+Participant
+
+↓
+
+Google Form
+
+↓
+
+Google Sheets
+
+↓
+
+Google Sheets API
+
+↓
+
+Registration Service
+
+↓
+
+Firebase
+
+↓
+
+Live Leaderboard
+```
+
+---
+
+## Score Update
+
+```
+Administrator
+
+↓
+
+Score Service
+
+↓
+
+Firebase API
+
+↓
+
+Realtime Database
+
+↓
+
+Connected Clients
+
+↓
+
+Updated Leaderboard
+```
+
+---
+
+# Summary
+
+The Friends Like These application integrates multiple cloud services to provide a responsive, real-time event management platform.
+
+Firebase provides real-time data synchronisation, Google Forms simplifies participant registration, Google Sheets stores registration data, and QR code integration streamlines participant access.
+
+The modular API architecture allows the application to evolve into a full enterprise solution with a dedicated backend and RESTful API while maintaining a clear separation between presentation, business logic, and external services.
