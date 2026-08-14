@@ -1,397 +1,687 @@
-# 🎮 Friends Like These: Campus Key Edition
+# Friends Like These
 
-A real-time event management and live scoring platform developed for the **Campus Key Friends Like These** competition.
+Friends Like These is a responsive games-night scoring and event-management application designed for live team competitions.
 
-The application enables event organisers to manage teams, update scores in real time, synchronise participant registrations, and display a live leaderboard across multiple devices. It combines responsive web technologies with cloud services to deliver a seamless experience for both organisers and participants.
+The project began as a CampusKey games-night application and is now being rebuilt as a more structured full-stack system using React, TypeScript and a planned Java Spring Boot backend.
 
----
+The application is designed to support live events where administrators manage teams and scores while participants and spectators follow a public leaderboard in real time.
 
-## Live Demo
+The interface is being designed for:
 
-🔗 https://friendsliketheseck.netlify.app/
-
----
-
-## Overview
-
-Friends Like These: Campus Key Edition was developed to simplify the management of live student competitions.
-
-Instead of manually tracking scores and registrations, the application provides:
-
-- Live team leaderboard
-- Real-time score synchronisation
-- Automatic team registration import
-- Administrator dashboard
-- Registration countdown timer
-- QR code registration
-- Responsive display suitable for TVs, laptops, tablets and mobile devices
-
-The project demonstrates practical software engineering principles through the integration of cloud services, responsive interface design, and real-time data synchronisation.
+- TVs and large event displays
+- Desktop and laptop computers
+- Tablets
+- Mobile phones
 
 ---
 
-# Features
+# Project Status
 
-## Live Leaderboard
+The project is currently undergoing a full rebuild.
 
-- Real-time score updates
-- Automatic ranking
-- Gold, Silver and Bronze highlighting
-- Live score animations
-- Responsive scoreboard
+The active frontend rebuild is located on the:
+
+`react-rebuild`
+
+branch.
+
+The original Friends Like These implementation remains preserved on:
+
+`main`
+
+Current development status:
+
+- React frontend: In development
+- TypeScript migration: Implemented
+- Responsive scoreboard: Implemented
+- Admin dashboard: Implemented
+- Team management: Implemented locally
+- Score management: Implemented locally
+- Score history: Implemented locally
+- Spring Boot backend: Next development phase
+- PostgreSQL persistence: Planned
+- Authentication and authorisation: Planned
+- Real-time backend synchronisation: Planned
+- Azure deployment: Planned
 
 ---
 
-## Administrator Dashboard
+# Project Background
 
-Secure administrator panel allowing organisers to:
+The original Friends Like These application was developed to support a CampusKey student games-night competition.
+
+The first implementation demonstrated the core concept by allowing event organisers to manage teams, update scores and display a live leaderboard.
+
+The rebuild expands that concept into a maintainable full-stack application.
+
+The new version separates:
+
+- presentation
+- application state
+- business logic
+- persistence
+- authentication
+- external integrations
+
+This allows the application to grow beyond a single event while remaining easier to maintain and test.
+
+---
+
+# Current Features
+
+## Public Scoreboard
+
+The public scoreboard provides the spectator-facing event experience.
+
+Current functionality includes:
+
+- Team leaderboard
+- Automatic ranking based on score
+- Team names and members
+- Gold, silver and bronze medal indicators
+- Registration countdown
+- Registration QR code
+- Responsive team cards
+- Automatic score display updates when application state changes
+- Layouts designed for TVs, desktops, tablets and mobile phones
+
+The scoreboard is intentionally separated from administrative controls so that it can be displayed on a public event screen.
+
+---
+
+# Admin Dashboard
+
+The administration interface provides controls for managing the live event.
+
+Current functionality includes:
+
+- Event settings
+- Registration deadline management
+- Team management
+- Add Team
+- Edit Team
+- Delete Team
+- Delete confirmation
+- Undo accidental team deletion
+- Quick score adjustments
+- Custom score adjustments
+- Score history
+- Reset All Scores
+- Reset confirmation
+- Responsive administration layout
+
+---
+
+# Team Management
+
+Administrators can currently:
 
 - Add teams
-- Remove teams
-- Increase scores
-- Deduct scores
-- Reset all scores
-- Reload registration data
+- Edit existing teams
+- Delete teams
+- View team member counts
+- Manage team scores
+
+Deleting a team requires confirmation.
+
+After deletion, an undo notification remains available for six seconds so that an accidental deletion can be reversed.
 
 ---
 
-## Team Registration
+# Score Management
 
-Participants register using:
+Administrators can award or deduct points directly from the team-management interface.
 
-- Google Forms
-- QR Code
-- Automatic Google Sheets integration
+Quick score controls currently include:
 
-New teams automatically become available inside the administration system.
+- +5
+- +10
+- +15
+- +20
+- -5
+- Custom
 
----
+Each quick-score button uses a distinct visual treatment so administrators can identify scoring actions quickly during a live event.
 
-## Countdown Timer
+Custom score adjustments allow an administrator to specify an amount and reason.
 
-Displays the remaining registration time.
-
-Features include:
-
-- Live countdown
-- Automatic registration closure
-- Visual warning when registration is about to close
+Team scores are prevented from becoming negative.
 
 ---
 
-## Firebase Integration
+# Score History
 
-Scores are stored inside Firebase Realtime Database.
+Score changes are recorded in the frontend application state.
 
-Benefits include:
+A score event contains information such as:
 
-- Instant synchronisation
-- Multiple device support
-- Cloud persistence
-- Automatic updates
+- Team ID
+- Amount changed
+- Reason
+- Timestamp
 
----
+The Score History panel provides administrators with a record of scoring activity during the event.
 
-## Google Sheets Integration
+The panel uses a fixed-size scrollable interface so that a large score history does not continually increase the height of the dashboard.
 
-The application automatically imports team information from Google Sheets.
-
-This removes the need for organisers to manually capture participant information.
+Persistent score history will be implemented when the Spring Boot backend and PostgreSQL database are introduced.
 
 ---
 
-## Responsive Design
+# Reset All Scores
 
-Optimised for
+Administrators can reset all team scores to zero.
 
-- Desktop
-- Laptop
-- Tablet
-- Mobile
-- Television displays
+Because this is a high-impact operation, the application requires confirmation before performing the reset.
+
+The backend version will also persist reset activity so that important scoring operations remain auditable.
 
 ---
 
-# Technologies Used
+# Responsive Design
+
+Responsive design is a core project requirement.
+
+Friends Like These must operate correctly on multiple device types.
+
+## TV / Large Display
+
+The public scoreboard should prioritise:
+
+- Large team names
+- Large scores
+- Rankings
+- Registration countdown
+- High visibility
+- Readability from a distance
+
+Administrative controls are not the primary TV use case.
+
+## Desktop / Laptop
+
+Desktop devices provide the complete administration experience, including:
+
+- Event settings
+- Team management
+- Score controls
+- Score history
+- Modal forms
+
+## Tablet
+
+Tablet layouts must provide:
+
+- Touch-friendly controls
+- Reduced column layouts
+- Responsive modals
+- No horizontal page overflow
+
+## Mobile Phone
+
+Mobile layouts must provide:
+
+- Single-column layouts where appropriate
+- Large touch targets
+- Wrapped score controls
+- Responsive team cards
+- Full-width or near-full-width modal interfaces
+- No horizontal page overflow
+
+Responsive behaviour will continue to be tested throughout development rather than being added only at the end.
+
+---
+
+# Current Technology Stack
 
 ## Frontend
 
-- HTML5
-- CSS3
-- JavaScript (ES6)
-
----
-
-## Backend Services
-
-- Firebase Realtime Database
-
----
-
-## External APIs
-
-- Google Sheets API
-- Google Forms
-- QR Code Generator API
-
----
-
-## Hosting
-
-- Netlify
-
----
+- React
+- TypeScript
+- Vite
+- CSS
+- ESLint
 
 ## Development Tools
 
-- Visual Studio Code
+- IntelliJ IDEA
 - Git
 - GitHub
+- npm
 
 ---
 
-# Software Engineering Principles
+# Planned Backend Technology
 
-This project applies several software engineering concepts including:
+The backend will be developed as a separate project.
 
-- Modular design
-- Separation of concerns
-- Responsive UI design
-- Cloud-based architecture
-- Real-time data synchronisation
-- External API integration
-- Event-driven programming
+Planned technologies include:
+
+- Java 21
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- Jakarta Validation
+- PostgreSQL
+- JWT authentication
+
+The backend will use object-oriented programming with a lightweight domain-oriented structure.
+
+Full enterprise Domain-Driven Design is not currently required for the size of this application.
 
 ---
 
-# Project Architecture
+# Planned Architecture
 
+The completed application is intended to follow this structure:
+
+```text
+React Frontend
+      |
+      | HTTP / REST
+      |
+      v
+Spring Boot Backend
+      |
+      | JPA
+      |
+      v
+PostgreSQL Database
 ```
-                 Users
-                    │
-                    ▼
-        Friends Like These Website
-                    │
-     ┌──────────────┼──────────────┐
-     ▼              ▼              ▼
-Google Forms   Firebase DB   Google Sheets
-     │              │              │
-     └──────────────┴──────────────┘
-                    │
-                    ▼
-           Live Scoreboard
-```
 
----
+Real-time communication will later be added so that score changes made by an administrator can appear on public scoreboard devices without requiring a manual refresh.
 
-# Main Components
+For example:
 
-## Scoreboard
-
-Displays:
-
-- Team rankings
-- Live scores
-- Team members
-- Registration countdown
-- QR registration
-
----
-
-## Admin Panel
-
-Allows administrators to:
-
-- Authenticate
-- Manage teams
-- Update scores
-- Reset competition
-
----
-
-## Registration Module
-
-Responsible for:
-
-- Team registration
-- Google Forms integration
-- Google Sheets synchronisation
-
----
-
-## Score Synchronisation
-
-Uses Firebase Realtime Database to provide:
-
-- Instant updates
-- Live score changes
-- Automatic refresh
-
----
-
-# Folder Structure
-
-```
-FriendsLikeThese/
-
-│
-├── README.md
-├── FRONTEND_DOCUMENTATION.md
-├── BACKEND_DOCUMENTATION.md
-├── SOFTWARE_ARCHITECTURE.md
-├── DATABASE_DESIGN.md
-├── API_DOCUMENTATION.md
-├── LICENSE
-│
-├── frontend/
-│   ├── html/
-│   ├── css/
-│   ├── javascript/
-│   └── assets/
-│
-├── backend/
-│   ├── controllers/
-│   ├── services/
-│   ├── models/
-│   └── utilities/
-│
-├── UML/
-│
-├── screenshots/
-│
-└── docs/
+```text
+Admin Laptop / Phone
+        |
+        | Score update
+        v
+Spring Boot
+        |
+        | Persist
+        v
+PostgreSQL
+        |
+        | Live update
+        v
+TV / Tablet / Phone Scoreboards
 ```
 
 ---
 
-# Installation
+# Backend Structure
 
-Clone the repository.
+The planned Spring Boot backend will use packages similar to:
+
+```text
+com.friendslikethese.backend
+|
+|-- controller
+|-- service
+|-- repository
+|-- domain
+|-- dto
+|-- security
+|-- config
+`-- exception
+```
+
+The basic application flow will be:
+
+```text
+Controller
+    |
+    v
+Service
+    |
+    v
+Repository
+    |
+    v
+Database
+```
+
+Controllers will handle HTTP communication.
+
+Services will contain application and business logic.
+
+Repositories will handle persistence.
+
+Domain classes will represent important application concepts such as teams, score events, users and event settings.
+
+---
+
+# Planned Backend Features
+
+The backend development phase will introduce:
+
+- Persistent teams
+- Persistent scores
+- Persistent score history
+- Persistent event settings
+- Team CRUD operations
+- Score adjustment API
+- Reset score operations
+- Authentication
+- Authorisation
+- Administrator accounts
+- Validation
+- Centralised exception handling
+- Real-time scoreboard synchronisation
+- Registration integration
+
+---
+
+# Planned API
+
+The first backend milestone will provide team-management endpoints similar to:
+
+```text
+GET    /api/teams
+POST   /api/teams
+PUT    /api/teams/{id}
+DELETE /api/teams/{id}
+```
+
+Additional endpoints will later support:
+
+```text
+/api/scores
+/api/score-events
+/api/event-settings
+/api/auth
+```
+
+The final endpoint structure will be determined as the backend domain is implemented.
+
+---
+
+# Frontend Structure
+
+The current frontend is organised approximately as follows:
+
+```text
+src/
+|
+|-- assets/
+|   `-- branding/
+|
+|-- components/
+|   |
+|   |-- admin/
+|   |   |-- AddTeamForm
+|   |   |-- AdminDashboard
+|   |   |-- AdminEventSettings
+|   |   |-- AdminTeamList
+|   |   |-- DeleteTeamDialog
+|   |   |-- EditTeamForm
+|   |   |-- ScoreAdjustmentForm
+|   |   |-- ScoreHistory
+|   |   `-- UndoDeleteToast
+|   |
+|   |-- layout/
+|   |   `-- AppHeader
+|   |
+|   |-- scoreboard/
+|   |   |-- Countdown
+|   |   |-- RegistrationQR
+|   |   `-- Scoreboard
+|   |
+|   `-- team/
+|       |-- MedalBadge
+|       |-- TeamCard
+|       `-- TeamList
+|
+|-- config/
+|
+|-- models/
+|
+|-- styles/
+|
+|-- App.tsx
+`-- main.tsx
+```
+
+---
+
+# State Management
+
+During the frontend development phase, the primary application state is currently held in React.
+
+This includes:
+
+- Teams
+- Scores
+- Score events
+- Registration deadline
+- Delete/undo state
+- Current application view
+
+This is temporary.
+
+Once backend integration begins, the Spring Boot backend and PostgreSQL database will become the authoritative source for persistent application data.
+
+React will then request and update data through the backend API.
+
+---
+
+# Data Rules
+
+The rebuild follows several important application rules.
+
+## Scores
+
+A team's score must not fall below zero.
+
+## Score History
+
+Meaningful score changes should produce an auditable score event.
+
+## Team Deletion
+
+Team deletion requires confirmation.
+
+An accidental deletion can currently be undone for a short period.
+
+## Score Reset
+
+Resetting all scores requires confirmation because it affects every team.
+
+## Shared Data
+
+The public scoreboard and admin dashboard must ultimately use the same authoritative backend data.
+
+---
+
+# Local Development
+
+## Requirements
+
+Install:
+
+- Node.js
+- npm
+
+Clone or switch to the frontend rebuild branch.
+
+Install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/FriendsLikeThese.git
+npm install
 ```
 
-Navigate into the project.
+Start the Vite development server:
 
 ```bash
-cd FriendsLikeThese
+npm run dev
 ```
 
-Open the project using your preferred IDE.
+The development server normally runs at:
 
-Configure:
+```text
+http://localhost:5173
+```
 
-- Firebase credentials
-- Google Sheets API
-- Registration form URL
+Run ESLint:
 
-Run the application.
+```bash
+npm run lint
+```
 
----
+Create a production build:
 
-# Future Improvements
-
-Potential future enhancements include:
-
-- User authentication
-- Multiple competitions
-- Tournament brackets
-- Team statistics
-- Historical score tracking
-- Export to Excel
-- Analytics dashboard
-- Dark/Light themes
-- Email notifications
-- Attendance tracking
-- AI-powered event insights
+```bash
+npm run build
+```
 
 ---
 
-# Skills Demonstrated
+# Git Branches
 
-## Software Engineering
+The repository currently uses:
 
-- Object-Oriented Design
-- Modular Programming
-- MVC Principles
-- Software Architecture
-- Problem Solving
+## `main`
 
----
+Contains the original Friends Like These implementation.
 
-## Frontend Development
+## `react-rebuild`
 
-- HTML5
-- CSS3
-- JavaScript
-- Responsive Design
-- Animations
+Contains the current React and TypeScript rebuild.
+
+The original application is intentionally preserved while the new version is being developed.
 
 ---
 
-## Backend Integration
+# Backend Repository
 
-- Firebase
-- REST APIs
-- Cloud Synchronisation
+The Spring Boot backend will be developed as a separate IntelliJ project rather than inside the React frontend directory.
 
----
+The frontend and backend will therefore have separate:
 
-## Data Management
+- dependency management
+- build processes
+- development servers
+- project structures
 
-- Google Sheets API
-- JSON
-- Data Parsing
+During local development:
 
----
+```text
+React
+http://localhost:5173
 
-## User Experience
+Spring Boot
+http://localhost:8080
 
-- Responsive layouts
-- Accessibility considerations
-- Live feedback
-- Dashboard design
-
----
-
-# Learning Outcomes
-
-This project strengthened my understanding of:
-
-- Real-time application development
-- Cloud database integration
-- API communication
-- Event-driven programming
-- Responsive interface design
-- Software architecture
-- Frontend engineering
-- User experience design
-- Version control using Git
+PostgreSQL
+localhost:5432
+```
 
 ---
 
-# Author
+# Cloud Direction
 
-**Masego Madisha**
+Azure is the planned cloud platform for the backend.
 
-Final-year Bachelor of Commerce (Computer Science and Information Systems)
+The intended production architecture is:
 
-Nelson Mandela University
+```text
+Frontend
+    |
+    v
+Spring Boot API
+Azure App Service
+    |
+    v
+Azure Database for PostgreSQL
+```
 
-GitHub:
-https://github.com/Masego911
+The frontend deployment platform will be finalised during the deployment phase.
+
 ---
 
-# License
+# Planned DevOps
 
-This project is licensed under the MIT License.
+Later development phases are intended to include:
+
+- Docker
+- GitHub Actions
+- Automated builds
+- Automated tests
+- Backend deployment
+- Environment configuration
+- Production database configuration
 
 ---
 
-# Acknowledgements
+# Development Roadmap
 
-Special thanks to:
-- Campus Key
+The current development sequence is:
 
-for providing the platforms and technologies that made this project possible.
+1. Complete frontend foundation
+2. Create Spring Boot backend
+3. Configure PostgreSQL
+4. Implement Team domain
+5. Implement Team CRUD API
+6. Implement scoring domain
+7. Persist score history
+8. Persist event settings
+9. Implement authentication
+10. Implement authorisation
+11. Connect React to Spring Boot
+12. Add real-time score synchronisation
+13. Add registration integration
+14. Perform multi-device testing
+15. Add Docker
+16. Add CI/CD
+17. Deploy backend and database to Azure
+
+See:
+
+`docs/DEVELOPMENT_ROADMAP.md`
+
+for more detail.
+
+---
+
+# Documentation
+
+Additional project documentation is available in:
+
+```text
+docs/
+|-- ARCHITECTURE.md
+|-- DEVELOPMENT_ROADMAP.md
+`-- FRONTEND.md
+```
+
+---
+
+# Current Limitations
+
+The current rebuild is still frontend-driven.
+
+Teams, scores, score history and event settings are currently stored in memory.
+
+This means refreshing the application can reset temporary application state.
+
+Backend persistence has not yet been implemented.
+
+Authentication has not yet been implemented.
+
+Real-time communication between separate devices has not yet been implemented.
+
+These limitations will be addressed during the Spring Boot backend phase.
+
+---
+
+# Repository
+
+GitHub repository:
+
+`Masego911/Friends-Like-These`
+
+Active rebuild branch:
+
+`react-rebuild`
