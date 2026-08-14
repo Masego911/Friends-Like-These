@@ -1,0 +1,97 @@
+.delete-team-dialog__backdrop {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(11, 31, 58, 0.58);
+    backdrop-filter: blur(2px);
+}
+
+.delete-team-dialog {
+    width: min(100%, 28rem);
+    padding: 1.75rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-top: 4px solid #dc2626;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(11, 31, 58, 0.24);
+}
+
+.delete-team-dialog__eyebrow {
+    color: #dc2626;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.delete-team-dialog h2 {
+    margin: 0.45rem 0 0;
+    color: #0b1f3a;
+    font-size: 1.45rem;
+    line-height: 1.3;
+}
+
+.delete-team-dialog p {
+    margin: 0.75rem 0 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.delete-team-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.delete-team-dialog__actions button {
+    min-height: 2.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.delete-team-dialog__cancel {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.delete-team-dialog__cancel:hover {
+    background: #f8fafc;
+}
+
+.delete-team-dialog__confirm {
+    background: #dc2626;
+    border: 1px solid #dc2626;
+    color: #ffffff;
+}
+
+.delete-team-dialog__confirm:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.delete-team-dialog__actions button:focus-visible {
+    outline: 3px solid rgba(0, 174, 181, 0.38);
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .delete-team-dialog {
+        padding: 1.4rem;
+    }
+
+    .delete-team-dialog__actions {
+        flex-direction: column;
+    }
+
+    .delete-team-dialog__actions button {
+        width: 100%;
+    }
+}

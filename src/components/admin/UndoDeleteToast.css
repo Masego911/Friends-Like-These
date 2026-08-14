@@ -1,0 +1,59 @@
+.undo-delete-toast {
+    position: fixed;
+    z-index: 900;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    width: calc(100vw - 3rem);
+    max-width: 26rem;
+    padding: 1rem 1.1rem;
+    background: #0b1f3a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 4px solid #00aeb5;
+    border-radius: 14px;
+    color: #ffffff;
+    box-shadow: 0 16px 36px rgba(11, 31, 58, 0.24);
+}
+
+.undo-delete-toast p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.undo-delete-toast button {
+    flex: 0 0 auto;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.75rem;
+    background: transparent;
+    border: 1px solid rgba(94, 234, 212, 0.55);
+    border-radius: 8px;
+    color: #5eead4;
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.undo-delete-toast button:hover {
+    background: rgba(0, 174, 181, 0.16);
+}
+
+.undo-delete-toast button:focus-visible {
+    outline: 3px solid rgba(94, 234, 212, 0.45);
+    outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+    .undo-delete-toast {
+        right: 1rem;
+        bottom: 1rem;
+        left: 1rem;
+        width: auto;
+        max-width: none;
+        gap: 0.75rem;
+    }
+}

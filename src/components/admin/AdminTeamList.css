@@ -1,0 +1,320 @@
+/* =========================
+   Manage Teams Panel
+   ========================= */
+
+.admin-team-list {
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+
+/* =========================
+   Header
+   ========================= */
+
+.admin-team-list__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-team-list__eyebrow {
+    color: #00aeb5;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.admin-team-list__header h2 {
+    margin: 0.25rem 0 0;
+    color: #0b1f3a;
+}
+
+.admin-team-list__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-team-list__header-actions button {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            background 0.15s ease,
+            border-color 0.15s ease,
+            transform 0.15s ease;
+}
+
+.admin-team-list__add-button {
+    background: #00aeb5;
+    border: 2px solid #00aeb5;
+    color: #ffffff;
+}
+
+.admin-team-list__add-button:hover {
+    background: #008f95;
+    border-color: #008f95;
+    transform: translateY(-1px);
+}
+
+.admin-team-list__reset-button {
+    background: rgba(220, 38, 38, 0.08);
+    border: 2px solid #dc2626;
+    color: #dc2626;
+}
+
+.admin-team-list__reset-button:hover {
+    background: rgba(220, 38, 38, 0.14);
+    transform: translateY(-1px);
+}
+
+
+/* =========================
+   Team List
+   ========================= */
+
+.admin-team-list__items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.admin-team-list__row {
+    display: grid;
+    grid-template-columns:
+        minmax(180px, 1fr)
+        auto
+        minmax(300px, auto)
+        auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.admin-team-list__info {
+    min-width: 0;
+}
+
+.admin-team-list__info h3 {
+    margin: 0;
+    color: #0b1f3a;
+    font-size: 1rem;
+}
+
+.admin-team-list__info p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.admin-team-list__score {
+    min-width: 68px;
+    color: #00aeb5;
+    font-weight: 900;
+    text-align: right;
+}
+
+
+/* =========================
+   Score Controls
+   ========================= */
+
+.admin-team-list__score-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.score-button {
+    min-width: 48px;
+    padding: 0.55rem 0.75rem;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            background 0.15s ease,
+            transform 0.15s ease,
+            box-shadow 0.15s ease,
+            opacity 0.15s ease;
+}
+
+.score-button--5 {
+    background: rgba(0, 174, 181, 0.12);
+    border-color: #00aeb5;
+    color: #008f95;
+}
+
+.score-button--10 {
+    background: rgba(37, 99, 235, 0.11);
+    border-color: #2563eb;
+    color: #1d4ed8;
+}
+
+.score-button--15 {
+    background: rgba(124, 58, 237, 0.11);
+    border-color: #7c3aed;
+    color: #6d28d9;
+}
+
+.score-button--20 {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: #d97706;
+    color: #b45309;
+}
+
+.score-button--deduct {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.score-button--custom {
+    background: rgba(11, 31, 58, 0.08);
+    border-color: #0b1f3a;
+    color: #0b1f3a;
+}
+
+.score-button:hover {
+    opacity: 0.82;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.score-button:active {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.score-button:focus-visible {
+    outline: 3px solid rgba(0, 174, 181, 0.25);
+    outline-offset: 3px;
+}
+
+
+/* =========================
+   Edit and Delete Actions
+   ========================= */
+
+.admin-team-list__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-team-list__actions button {
+    padding: 0.55rem 0.75rem;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #334155;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+            background 0.15s ease,
+            border-color 0.15s ease;
+}
+
+.admin-team-list__actions button:hover {
+    background: #f1f5f9;
+}
+
+.admin-team-list__actions .admin-team-list__delete {
+    background: rgba(220, 38, 38, 0.04);
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.admin-team-list__actions .admin-team-list__delete:hover {
+    background: #fff1f2;
+}
+
+
+/* =========================
+   Tablet
+   ========================= */
+
+@media (max-width: 1000px) {
+    .admin-team-list__row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .admin-team-list__score-controls {
+        grid-column: 1 / -1;
+    }
+
+    .admin-team-list__actions {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* =========================
+   Mobile
+   ========================= */
+
+@media (max-width: 700px) {
+    .admin-team-list {
+        padding: 1rem;
+    }
+
+    .admin-team-list__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-team-list__header-actions {
+        width: 100%;
+    }
+
+    .admin-team-list__header-actions button {
+        flex: 1;
+    }
+
+    .admin-team-list__row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-team-list__score {
+        text-align: left;
+    }
+
+    .admin-team-list__score-controls,
+    .admin-team-list__actions {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-team-list__header-actions {
+        flex-direction: column;
+    }
+
+    .admin-team-list__header-actions button {
+        width: 100%;
+    }
+
+    .score-button {
+        flex: 1;
+        min-width: 58px;
+    }
+}

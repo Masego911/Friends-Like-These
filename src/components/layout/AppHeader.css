@@ -1,0 +1,147 @@
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    width: 100%;
+    padding: 1.25rem 2rem;
+    box-sizing: border-box;
+    background: #0b1f3a;
+}
+
+.app-header__branding {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.app-header__friends {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header__friends-name {
+    color: #ffffff;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.app-header__colour-bar {
+    display: flex;
+    width: 100%;
+    height: 6px;
+    margin-top: 0.55rem;
+}
+
+.app-header__colour {
+    flex: 1;
+}
+
+.app-header__colour--orange {
+    background: #f59e0b;
+}
+
+.app-header__colour--red {
+    background: #ef3340;
+}
+
+.app-header__colour--purple {
+    background: #4f46a5;
+}
+
+.app-header__colour--blue {
+    background: #2589c9;
+}
+
+.app-header__colour--teal {
+    background: #10a8a5;
+}
+
+.app-header__campuskey {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.app-header__campuskey-name {
+    color: #ffffff;
+    font-size: 1.8rem;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.app-header__campuskey-edition {
+    margin-top: 0.45rem;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+}
+
+.app-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.app-header__scoreboard-button,
+.app-header__admin-button {
+    border: 0;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.app-header__scoreboard-button {
+    position: relative;
+    padding: 0.75rem 0;
+    background: transparent;
+    color: #ffffff;
+}
+
+.app-header__scoreboard-button::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #00aeb5;
+    content: "";
+}
+
+.app-header__admin-button {
+    padding: 0.75rem 1.4rem;
+    background: #00aeb5;
+    border-radius: 12px;
+    color: #ffffff;
+}
+
+.app-header__admin-button:hover {
+    background: #008f95;
+}
+
+@media (max-width: 700px) {
+    .app-header {
+        padding: 1rem;
+    }
+
+    .app-header__branding {
+        gap: 1rem;
+    }
+
+    .app-header__friends-name {
+        font-size: 1.1rem;
+    }
+
+    .app-header__campuskey {
+        display: none;
+    }
+
+    .app-header__scoreboard-button {
+        display: none;
+    }
+
+    .app-header__admin-button {
+        padding: 0.65rem 1rem;
+    }
+}

@@ -1,0 +1,6 @@
+.team-list {
+    display: flex; /* Stacks the team cards vertically. */
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}

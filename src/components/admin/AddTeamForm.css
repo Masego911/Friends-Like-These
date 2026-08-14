@@ -1,0 +1,114 @@
+.add-team-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.add-team-form__header h2 {
+    margin: 0.25rem 0 0;
+    color: #0b1f3a;
+}
+
+.add-team-form__eyebrow {
+    color: #00aeb5;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.add-team-form__field,
+.add-team-form__members {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.add-team-form label {
+    color: #52657a;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.add-team-form input {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font: inherit;
+}
+
+.add-team-form input:focus {
+    border-color: #00aeb5;
+    outline: none;
+}
+
+.add-team-form__members-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.add-team-form__members-header button {
+    padding: 0.5rem 0.75rem;
+    background: #eefafa;
+    border: 1px solid #b9e7e8;
+    border-radius: 8px;
+    color: #008f95;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.add-team-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.add-team-form__actions button {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.add-team-form__cancel {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #334155;
+}
+
+.add-team-form__save {
+    background: #00aeb5;
+    border: 1px solid #00aeb5;
+    color: #ffffff;
+}
+
+.add-team-form__error {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+    color: #be123c;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.add-team-form__member-count {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.add-team-form__members-header button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

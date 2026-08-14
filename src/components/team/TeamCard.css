@@ -1,0 +1,128 @@
+.team-card {
+    display: flex; /* Main card layout. */
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    min-height: 86px;
+    padding: 0.8rem 1.25rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.team-card__rank {
+    display: flex; /* Holds the medal or normal rank. */
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    flex-shrink: 0;
+}
+
+.medal-badge {
+    width: 68px;
+    height: 78px;
+    overflow: visible;
+    filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.22));
+}
+
+.medal-badge__number {
+    fill: #10233f;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 34px;
+    font-weight: 900;
+    dominant-baseline: middle;
+    paint-order: stroke;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 1.5px;
+}
+
+.team-card__rank-number {
+    display: flex; /* Standard rank for position 4 onwards. */
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: #eef1f4;
+    border-radius: 50%;
+    color: #334155;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.team-card__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.team-card__name {
+    margin: 0;
+    color: #0b1f3a;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.team-card__members {
+    margin: 0.3rem 0 0;
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-card__score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+
+.team-card__score-value {
+    color: #00aeb5;
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.team-card__score-label {
+    margin-top: 0.2rem;
+    color: #9ca3af;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+    .team-card {
+        gap: 0.7rem;
+        padding: 0.75rem;
+    }
+
+    .team-card__rank {
+        width: 58px;
+    }
+
+    .medal-badge {
+        width: 56px;
+        height: 66px;
+    }
+
+    .team-card__name {
+        font-size: 1rem;
+    }
+
+    .team-card__members {
+        font-size: 0.75rem;
+    }
+
+    .team-card__score {
+        min-width: 50px;
+    }
+
+    .team-card__score-value {
+        font-size: 1.5rem;
+    }
+}

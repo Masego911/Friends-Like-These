@@ -1,0 +1,123 @@
+.score-history {
+    display: flex;
+    flex-direction: column;
+    height: 340px;
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.score-history--expanded {
+    position: fixed;
+    z-index: 1200;
+    top: 8vh;
+    right: 8vw;
+    bottom: 8vh;
+    left: 8vw;
+    height: auto;
+    max-height: 84vh;
+}
+
+.score-history__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.score-history__header h2 {
+    margin: 0.25rem 0 0;
+    color: #0b1f3a;
+}
+
+.score-history__eyebrow {
+    color: #00aeb5;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.score-history__expand {
+    padding: 0.55rem 0.8rem;
+    background: #eefafa;
+    border: 1px solid #b9e7e8;
+    border-radius: 8px;
+    color: #008f95;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.score-history__list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.score-history__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.score-history__details h3 {
+    margin: 0;
+    color: #0b1f3a;
+    font-size: 0.95rem;
+}
+
+.score-history__details p {
+    margin: 0.25rem 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.score-history__details time {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.score-history__amount {
+    font-size: 1.1rem;
+    font-weight: 900;
+}
+
+.score-history__amount--positive {
+    color: #008f95;
+}
+
+.score-history__amount--negative {
+    color: #dc2626;
+}
+
+.score-history__empty {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 700px) {
+    .score-history {
+        height: 300px;
+    }
+
+    .score-history--expanded {
+        top: 5vh;
+        right: 1rem;
+        bottom: 5vh;
+        left: 1rem;
+    }
+}

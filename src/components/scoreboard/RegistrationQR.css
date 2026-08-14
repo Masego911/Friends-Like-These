@@ -1,0 +1,59 @@
+.registration-qr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    background: #fff8dd;
+    border: 1px solid #f5df91;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.registration-qr__eyebrow {
+    color: #52657a;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.registration-qr__title {
+    margin: 0.25rem 0 0;
+    color: #0b1f3a;
+    font-size: 1.25rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.registration-qr__text {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.registration-qr__link {
+    display: block;
+    flex-shrink: 0;
+    padding: 0.35rem;
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.registration-qr__image {
+    display: block;
+    width: 92px;
+    height: 92px;
+}
+
+@media (max-width: 700px) {
+    .registration-qr {
+        align-items: flex-start;
+    }
+
+    .registration-qr__image {
+        width: 78px;
+        height: 78px;
+    }
+}
