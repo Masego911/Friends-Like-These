@@ -1,6 +1,6 @@
 # Database Design
 
-## Friends Like These: Campus Key Edition
+## Friends Like These
 
 ---
 
@@ -8,464 +8,1609 @@
 
 ## Purpose
 
-This document describes the database design used by the Friends Like These: Campus Key Edition application.
+This document defines the database architecture and data model for the rebuilt Friends Like These application.
 
-It explains the logical data model, entity relationships, data validation rules, Firebase data structure, and future relational database design.
+Friends Like These is a real-time games-night scoring and event management platform designed to allow event organisers to:
 
-Although the current implementation uses Firebase Realtime Database, this document also presents a relational database design that could be implemented using PostgreSQL, MySQL, or SQL Server.
+- Create and manage events.
+- Register and manage teams.
+- Manage team members.
+- Award and deduct points.
+- Perform custom score adjustments.
+- Reset scores.
+- Maintain score history.
+- Display a live leaderboard.
+- Manage registration deadlines.
+- Authenticate authorised administrators.
+- Preserve historical event and scoring information.
 
----
+The rebuilt system uses a relational database architecture built around PostgreSQL and a Spring Boot backend.
 
-# 2. Database Overview
+The database is designed to provide:
 
-The application stores information relating to:
-
-- Events
-- Teams
-- Participants
-- Scores
-- Administrators
-- Registration status
-
-The system uses Firebase Realtime Database for cloud storage and real-time synchronisation.
-
----
-
-# 3. Database Architecture
-
-```
-                Friends Like These
-
-                        │
-
-        ┌───────────────┼───────────────┐
-
-        ▼                               ▼
-
-Firebase Realtime Database      Google Sheets
-
-        │
-
-        ▼
-
-Live Scoreboard
-```
+- Data integrity.
+- Transactional consistency.
+- Historical score tracking.
+- Auditability.
+- Efficient leaderboard retrieval.
+- Secure administrator management.
+- Support for multiple events.
+- Future multi-campus support.
+- Scalability beyond the original Campus Key implementation.
 
 ---
 
-# 4. Data Model
+# 2. Architecture Overview
 
-The system consists of five primary entities.
+The rebuilt application separates the user interface, business logic and persistence layers.
 
-- Event
-- Team
-- Member
-- Score
-- Administrator
+The target architecture is:
 
----
+                    Friends Like These
 
-# 5. Entity Descriptions
+                            │
+                            ▼
 
-## Event
+                    React Frontend
 
-Represents a competition event.
+                            │
+                     REST API / JSON
+                            │
+                            ▼
 
-Attributes
+                  Spring Boot Backend
 
-| Attribute | Type | Description |
-|------------|------|-------------|
-| eventId | String | Unique event identifier |
-| eventName | String | Name of the event |
-| eventDate | Date | Competition date |
-| registrationDeadline | DateTime | Closing time |
-| status | String | Open or Closed |
+                            │
+                            ▼
 
----
+                      PostgreSQL
 
-## Team
+The React application does not communicate directly with the database.
 
-Represents a participating team.
+All database operations are performed through the Spring Boot backend.
 
-| Attribute | Type | Description |
-|------------|------|-------------|
-| teamId | String | Unique identifier |
-| teamName | String | Team name |
-| score | Integer | Current score |
-| position | Integer | Leaderboard position |
+This provides a clear separation between:
+
+- Presentation logic.
+- Business logic.
+- Domain rules.
+- Authentication and authorisation.
+- Data persistence.
 
 ---
 
-## Member
+# 3. Legacy Architecture
 
-Represents an individual participant.
+The original Friends Like These: Campus Key Edition used Firebase Realtime Database for cloud persistence and real-time score synchronisation.
 
-| Attribute | Type | Description |
-|------------|------|-------------|
-| memberId | String | Unique identifier |
-| fullName | String | Participant name |
-| email | String | Email address |
-| phone | String | Contact number |
+The original architecture was approximately:
 
----
+                    React / Web Client
 
-## Administrator
+                            │
+                            ▼
 
-Represents an authorised organiser.
+                Firebase Realtime Database
 
-| Attribute | Type | Description |
-|------------|------|-------------|
-| adminId | String | Administrator ID |
-| username | String | Login username |
-| password | String | Encrypted password |
+                            │
 
----
+                ┌───────────┴───────────┐
+                ▼                       ▼
 
-## Score
+          Live Scoreboard        Administrator Tools
 
-Represents a score update.
+Google Forms and Google Sheets were also used to support participant registration.
 
-| Attribute | Type | Description |
-|------------|------|-------------|
-| scoreId | String | Unique identifier |
-| teamId | String | Team being updated |
-| points | Integer | Points awarded |
-| timestamp | DateTime | Update time |
+Firebase provided a practical solution for the original event application because it enabled rapid development and real-time synchronisation.
+
+The rebuilt application replaces direct Firebase persistence with a dedicated Spring Boot API and PostgreSQL database.
+
+The Firebase implementation therefore represents the first generation of the application rather than the target persistence architecture.
 
 ---
 
-# 6. Relationships
+# 4. Target Database Technology
 
-```
-Event
+The primary relational database for the rebuilt application is:
 
-1
+PostgreSQL
 
-|
+The backend application will use:
 
-|
+- Java.
+- Spring Boot.
+- Spring Data JPA.
+- Hibernate.
+- PostgreSQL JDBC Driver.
+- Bean Validation.
+- Spring Security.
+- JWT authentication.
 
-*
-
-Team
-
-1
-
-|
-
-|
-
-*
-
-Member
-
-1
-
-|
-
-|
-
-1
-
-Score
-```
-
-Relationship summary
-
-- One Event contains many Teams.
-- One Team contains many Members.
-- Each Team has one current Score.
-- One Administrator manages many Teams.
+Database migrations may later be managed using Flyway.
 
 ---
 
-# 7. Entity Relationship Diagram
+# 5. Database Design Principles
 
-```
-+-------------+
-|    Event    |
-+-------------+
-| eventId PK  |
-| eventName   |
-| eventDate   |
-| deadline    |
-+-------------+
-       |
-       | 1
-       |
-       | *
-+-------------+
-|    Team     |
-+-------------+
-| teamId PK   |
-| teamName    |
-| score       |
-| position    |
-+-------------+
-       |
-       | 1
-       |
-       | *
-+-------------+
-|   Member    |
-+-------------+
-| memberId PK |
-| fullName    |
-| email       |
-| phone       |
-+-------------+
-```
+The database follows several core principles.
+
+## 5.1 Relational Integrity
+
+Relationships between entities are enforced using:
+
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Check constraints.
+- NOT NULL constraints.
 
 ---
 
-# 8. Firebase Data Structure
+## 5.2 Normalisation
 
-Example JSON
+The database is designed primarily according to Third Normal Form.
 
-```json
-{
-  "event": {
-    "eventName": "Friends Like These",
-    "registrationDeadline": "2026-08-20T18:00:00"
-  },
+Information such as team members is stored in separate relational tables rather than inside comma-separated strings or duplicated structures.
 
-  "teams": {
+---
 
-    "team001": {
+## 5.3 Auditability
 
-      "teamName": "Dominant FC",
+Score changes are not represented only by the current score.
 
-      "score": 120,
+Every scoring operation creates a historical ScoreEvent record.
 
-      "members": [
+This makes it possible to determine:
 
-        {
-          "name": "Alice"
-        },
+- Which team was affected.
+- How many points changed.
+- The previous score.
+- The resulting score.
+- Why the score changed.
+- When the change occurred.
+- Which administrator performed the action.
 
-        {
-          "name": "John"
-        }
+---
 
-      ]
-    },
+## 5.4 Transactional Consistency
 
-    "team002": {
+Operations affecting multiple records must execute within database transactions.
 
-      "teamName": "The Winners",
+For example, awarding points requires:
 
-      "score": 95
+1. Reading the current team score.
+2. Calculating the new score.
+3. Validating the result.
+4. Updating the team.
+5. Creating a score history record.
+6. Committing both changes together.
 
+If part of the operation fails, the entire transaction must be rolled back.
+
+---
+
+## 5.5 Separation of Current State and History
+
+The Team table stores the team's current score.
+
+The ScoreEvent table stores the historical changes that produced that score.
+
+This provides fast leaderboard retrieval while retaining a complete scoring history.
+
+---
+
+# 6. Core Entities
+
+The initial database contains six primary entities:
+
+1. Event
+2. EventSettings
+3. Team
+4. TeamMember
+5. User
+6. ScoreEvent
+
+The model can later be extended without redesigning the core scoring architecture.
+
+---
+
+# 7. Event Entity
+
+## Purpose
+
+An Event represents a particular Friends Like These games night or competition.
+
+Supporting Event as a separate entity allows the application to host multiple competitions without creating separate databases.
+
+Examples could include:
+
+- Friends Like These: Games Night.
+- Friends Like These: Heritage Night.
+- Friends Like These: Year-End Games.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| event_id | BIGINT | Yes | Primary key |
+| name | VARCHAR(150) | Yes | Event name |
+| description | VARCHAR(500) | No | Event description |
+| event_date | TIMESTAMP | No | Scheduled event date |
+| status | VARCHAR(30) | Yes | Current event status |
+| created_at | TIMESTAMP | Yes | Creation timestamp |
+| updated_at | TIMESTAMP | Yes | Last update timestamp |
+
+## Event Status
+
+Supported statuses may include:
+
+- DRAFT
+- REGISTRATION_OPEN
+- REGISTRATION_CLOSED
+- LIVE
+- COMPLETED
+- CANCELLED
+
+Event status should ultimately be represented as a Java enum in the Spring Boot domain model.
+
+---
+
+# 8. EventSettings Entity
+
+## Purpose
+
+EventSettings stores configurable settings belonging to an Event.
+
+Separating settings from the main Event entity prevents operational configuration from becoming mixed with the event's core identity.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| event_settings_id | BIGINT | Yes | Primary key |
+| event_id | BIGINT | Yes | Event foreign key |
+| registration_deadline | TIMESTAMP | No | Registration closing time |
+| registration_url | VARCHAR(500) | No | External or internal registration URL |
+| max_team_members | INTEGER | Yes | Maximum permitted members |
+
+Each Event has at most one EventSettings record.
+
+Therefore:
+
+    Event 1 ───────── 0..1 EventSettings
+
+The `event_id` column must be unique inside `event_settings`.
+
+---
+
+# 9. Team Entity
+
+## Purpose
+
+A Team represents a group participating in an Event.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| team_id | BIGINT | Yes | Primary key |
+| event_id | BIGINT | Yes | Event foreign key |
+| name | VARCHAR(120) | Yes | Team name |
+| score | INTEGER | Yes | Current score |
+| is_deleted | BOOLEAN | Yes | Soft-delete state |
+| created_at | TIMESTAMP | Yes | Creation timestamp |
+| updated_at | TIMESTAMP | Yes | Last modification timestamp |
+
+## Current Score
+
+The `score` column represents the current score used by the leaderboard.
+
+The score must never be negative.
+
+The database therefore enforces:
+
+    score >= 0
+
+## Team Position
+
+Leaderboard position is not stored permanently in the Team table.
+
+Position is calculated from the current team scores.
+
+For example:
+
+    ORDER BY score DESC
+
+This prevents inconsistencies such as:
+
+    Team A
+    score = 120
+    position = 3
+
+while:
+
+    Team B
+    score = 100
+    position = 1
+
+Ranking should always be derived from the current data.
+
+---
+
+# 10. TeamMember Entity
+
+## Purpose
+
+TeamMember represents an individual participant belonging to a Team.
+
+Members are stored as individual database records rather than as arrays or comma-separated text.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| team_member_id | BIGINT | Yes | Primary key |
+| team_id | BIGINT | Yes | Team foreign key |
+| full_name | VARCHAR(150) | Yes | Participant name |
+| email | VARCHAR(200) | No | Participant email |
+| phone | VARCHAR(30) | No | Participant contact number |
+| created_at | TIMESTAMP | Yes | Creation timestamp |
+
+Relationship:
+
+    Team 1 ───────── * TeamMember
+
+A Team may contain multiple members.
+
+Each TeamMember belongs to exactly one Team.
+
+---
+
+# 11. User Entity
+
+## Purpose
+
+User represents an authenticated system user.
+
+The initial application primarily requires administrators, but using a general User entity allows additional roles to be introduced later.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| user_id | BIGINT | Yes | Primary key |
+| username | VARCHAR(100) | Yes | Unique username |
+| email | VARCHAR(200) | Yes | Unique email address |
+| password_hash | VARCHAR(255) | Yes | Secure password hash |
+| role | VARCHAR(30) | Yes | Authorisation role |
+| enabled | BOOLEAN | Yes | Account status |
+| created_at | TIMESTAMP | Yes | Account creation timestamp |
+
+Possible roles include:
+
+- ADMIN
+- SUPER_ADMIN
+- SCORE_KEEPER
+
+The initial implementation may use only ADMIN while preserving the ability to introduce more granular permissions later.
+
+## Password Security
+
+Plain-text passwords must never be stored.
+
+The database stores only:
+
+    password_hash
+
+Password hashing will be performed by the Spring Boot security layer using an appropriate password encoder.
+
+---
+
+# 12. ScoreEvent Entity
+
+## Purpose
+
+ScoreEvent represents a historical change to a team's score.
+
+This entity provides the audit trail behind the live leaderboard.
+
+## Attributes
+
+| Attribute | PostgreSQL Type | Required | Description |
+|---|---|---|---|
+| score_event_id | BIGINT | Yes | Primary key |
+| event_id | BIGINT | Yes | Event foreign key |
+| team_id | BIGINT | Yes | Team affected |
+| performed_by | BIGINT | No | User responsible |
+| amount | INTEGER | Yes | Score adjustment |
+| previous_score | INTEGER | Yes | Score before adjustment |
+| new_score | INTEGER | Yes | Score after adjustment |
+| reason | VARCHAR(255) | Yes | Reason for change |
+| event_type | VARCHAR(30) | Yes | Type of scoring operation |
+| created_at | TIMESTAMP | Yes | Operation timestamp |
+
+Example:
+
+    Team: The All-Stars
+
+    Previous score: 85
+    Amount: +15
+    New score: 100
+
+    Reason:
+    "15 points awarded"
+
+    Event type:
+    AWARD
+
+ScoreEvent records must remain available even after later score changes occur.
+
+---
+
+# 13. Score Event Types
+
+Score events should distinguish between different operations.
+
+Possible values include:
+
+- AWARD
+- DEDUCTION
+- ADJUSTMENT
+- RESET
+- CORRECTION
+
+These should be represented as a Java enum.
+
+For example:
+
+    ScoreEventType.AWARD
+
+or:
+
+    ScoreEventType.RESET
+
+This is preferable to relying only on the numeric amount to determine what happened.
+
+---
+
+# 14. Entity Relationships
+
+The primary relationships are:
+
+    Event
+      │
+      ├──────── 1 : 0..1 ──────── EventSettings
+      │
+      ├──────── 1 : * ─────────── Team
+      │                             │
+      │                             └──── 1 : * ─── TeamMember
+      │
+      └──────── 1 : * ─────────── ScoreEvent
+                                      │
+                                      ├──── Team
+                                      │
+                                      └──── User
+
+Relationship summary:
+
+- One Event can contain many Teams.
+- One Event can have one EventSettings record.
+- One Team belongs to one Event.
+- One Team can contain many TeamMembers.
+- One Team can have many ScoreEvents.
+- One ScoreEvent belongs to one Event.
+- One ScoreEvent affects one Team.
+- One User can perform many ScoreEvents.
+
+---
+
+# 15. Entity Relationship Diagram
+
+    +-------------------+
+    |       EVENT       |
+    +-------------------+
+    | PK event_id       |
+    | name              |
+    | description       |
+    | event_date        |
+    | status            |
+    | created_at        |
+    | updated_at        |
+    +-------------------+
+          |         |
+          |         |
+        1 |         | 1
+          |         |
+          |         +----------------------+
+          |                                |
+          | *                              | 0..1
+    +-------------------+          +--------------------+
+    |       TEAM        |          |  EVENT_SETTINGS    |
+    +-------------------+          +--------------------+
+    | PK team_id        |          | PK settings_id     |
+    | FK event_id       |          | FK event_id        |
+    | name              |          | deadline           |
+    | score             |          | registration_url   |
+    | is_deleted        |          | max_team_members   |
+    +-------------------+          +--------------------+
+          |
+          | 1
+          |
+          | *
+    +-------------------+
+    |    TEAM_MEMBER    |
+    +-------------------+
+    | PK member_id      |
+    | FK team_id        |
+    | full_name         |
+    | email             |
+    | phone             |
+    +-------------------+
+
+
+    +-------------------+
+    |    SCORE_EVENT    |
+    +-------------------+
+    | PK score_event_id |
+    | FK event_id       |
+    | FK team_id        |
+    | FK performed_by   |
+    | amount            |
+    | previous_score    |
+    | new_score         |
+    | reason            |
+    | event_type        |
+    | created_at        |
+    +-------------------+
+          |
+          | *
+          |
+          | 0..1
+    +-------------------+
+    |       USER        |
+    +-------------------+
+    | PK user_id        |
+    | username          |
+    | email             |
+    | password_hash     |
+    | role              |
+    | enabled           |
+    +-------------------+
+
+---
+
+# 16. PostgreSQL Schema
+
+The initial PostgreSQL schema can be implemented as follows.
+
+## Events
+
+    CREATE TABLE events (
+        event_id BIGSERIAL PRIMARY KEY,
+        name VARCHAR(150) NOT NULL,
+        description VARCHAR(500),
+        event_date TIMESTAMP,
+        status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+## Event Settings
+
+    CREATE TABLE event_settings (
+        event_settings_id BIGSERIAL PRIMARY KEY,
+        event_id BIGINT NOT NULL UNIQUE,
+        registration_deadline TIMESTAMP,
+        registration_url VARCHAR(500),
+        max_team_members INTEGER NOT NULL DEFAULT 6,
+
+        CONSTRAINT fk_event_settings_event
+            FOREIGN KEY (event_id)
+            REFERENCES events(event_id)
+            ON DELETE CASCADE,
+
+        CONSTRAINT chk_max_team_members
+            CHECK (max_team_members > 0)
+    );
+
+## Teams
+
+    CREATE TABLE teams (
+        team_id BIGSERIAL PRIMARY KEY,
+        event_id BIGINT NOT NULL,
+        name VARCHAR(120) NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT fk_team_event
+            FOREIGN KEY (event_id)
+            REFERENCES events(event_id)
+            ON DELETE CASCADE,
+
+        CONSTRAINT chk_team_score
+            CHECK (score >= 0),
+
+        CONSTRAINT uq_team_name_per_event
+            UNIQUE (event_id, name)
+    );
+
+## Team Members
+
+    CREATE TABLE team_members (
+        team_member_id BIGSERIAL PRIMARY KEY,
+        team_id BIGINT NOT NULL,
+        full_name VARCHAR(150) NOT NULL,
+        email VARCHAR(200),
+        phone VARCHAR(30),
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT fk_team_member_team
+            FOREIGN KEY (team_id)
+            REFERENCES teams(team_id)
+            ON DELETE CASCADE
+    );
+
+## Users
+
+    CREATE TABLE users (
+        user_id BIGSERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        email VARCHAR(200) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(30) NOT NULL DEFAULT 'ADMIN',
+        enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+## Score Events
+
+    CREATE TABLE score_events (
+        score_event_id BIGSERIAL PRIMARY KEY,
+        event_id BIGINT NOT NULL,
+        team_id BIGINT NOT NULL,
+        performed_by BIGINT,
+        amount INTEGER NOT NULL,
+        previous_score INTEGER NOT NULL,
+        new_score INTEGER NOT NULL,
+        reason VARCHAR(255) NOT NULL,
+        event_type VARCHAR(30) NOT NULL DEFAULT 'ADJUSTMENT',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT fk_score_event_event
+            FOREIGN KEY (event_id)
+            REFERENCES events(event_id)
+            ON DELETE CASCADE,
+
+        CONSTRAINT fk_score_event_team
+            FOREIGN KEY (team_id)
+            REFERENCES teams(team_id)
+            ON DELETE RESTRICT,
+
+        CONSTRAINT fk_score_event_user
+            FOREIGN KEY (performed_by)
+            REFERENCES users(user_id)
+            ON DELETE SET NULL,
+
+        CONSTRAINT chk_previous_score
+            CHECK (previous_score >= 0),
+
+        CONSTRAINT chk_new_score
+            CHECK (new_score >= 0)
+    );
+
+---
+
+# 17. Data Validation Rules
+
+Validation is enforced at multiple levels:
+
+1. React frontend validation.
+2. Spring Boot request validation.
+3. Domain/service-layer validation.
+4. PostgreSQL constraints.
+
+The database remains the final integrity boundary.
+
+---
+
+## 17.1 Event Validation
+
+An Event must:
+
+- Have a name.
+- Have a recognised status.
+- Have valid date values.
+- Have a registration deadline appropriate to the event configuration.
+
+---
+
+## 17.2 Team Validation
+
+A Team must:
+
+- Have a non-empty name.
+- Belong to an existing Event.
+- Have a score of zero or greater.
+- Have a unique name within its Event.
+
+The same team name may potentially exist in different events.
+
+---
+
+## 17.3 TeamMember Validation
+
+A TeamMember must:
+
+- Have a full name.
+- Belong to an existing Team.
+
+If email or telephone information is supplied, the Spring Boot validation layer should validate its format.
+
+Duplicate-member rules should be handled by the service layer because people can legitimately share names.
+
+---
+
+## 17.4 User Validation
+
+A User must:
+
+- Have a unique username.
+- Have a unique email address.
+- Have a recognised role.
+- Store a password hash rather than a plain-text password.
+
+---
+
+## 17.5 Score Validation
+
+A score operation must:
+
+- Reference an existing Team.
+- Reference the correct Event.
+- Contain a valid amount.
+- Contain a reason.
+- Never produce a score below zero.
+
+Therefore:
+
+    newScore = currentScore + amount
+
+must satisfy:
+
+    newScore >= 0
+
+---
+
+# 18. Score Management
+
+Scoring is a transactional operation.
+
+When an administrator awards points, the Spring Boot service performs:
+
+    1. Retrieve Team.
+    2. Read current score.
+    3. Calculate new score.
+    4. Validate new score.
+    5. Update Team.score.
+    6. Create ScoreEvent.
+    7. Commit transaction.
+
+Example:
+
+    Current score = 80
+    Award = +20
+
+    New score = 100
+
+The database then contains:
+
+    teams.score = 100
+
+and:
+
+    score_events.previous_score = 80
+    score_events.amount = 20
+    score_events.new_score = 100
+
+The operation should be implemented in the Spring service layer using a transaction.
+
+---
+
+# 19. Quick Score Awards
+
+The frontend currently supports quick score operations such as:
+
+    +5
+    +10
+    +15
+    +20
+    -5
+    Custom
+
+Each operation ultimately calls the same backend scoring service.
+
+For example:
+
+    POST /api/teams/{teamId}/score
+
+The request may contain:
+
+    {
+        "amount": 15,
+        "reason": "15 points awarded"
     }
 
-  }
-}
-```
+The backend remains responsible for calculating and validating the final score.
+
+The frontend must not be trusted to determine authoritative score state.
 
 ---
 
-# 9. Data Dictionary
+# 20. Custom Score Adjustments
 
-## Team Table
+Administrators may manually adjust a team's score.
 
-| Field | Type | Required | Description |
-|---------|------|----------|-------------|
-| teamId | String | Yes | Unique ID |
-| teamName | String | Yes | Team name |
-| score | Integer | Yes | Current score |
-| position | Integer | Yes | Leaderboard ranking |
+A custom adjustment includes:
 
----
+- Team.
+- Amount.
+- Reason.
 
-## Member Table
+Example:
 
-| Field | Type | Required |
-|---------|------|----------|
-| memberId | String | Yes |
-| fullName | String | Yes |
-| email | String | No |
-| phone | String | No |
+    Team:
+    Code Warriors
 
----
+    Amount:
+    +25
 
-# 10. Validation Rules
+    Reason:
+    Bonus round winner
 
-## Team
-
-- Team name cannot be empty.
-- Team name must be unique.
-- Score cannot be negative.
+The operation produces a ScoreEvent in the same manner as a quick award.
 
 ---
 
-## Member
+# 21. Reset All Scores
 
-- Full name required.
-- Duplicate members not allowed.
+The administrator dashboard supports resetting every active team's score to zero.
 
----
+This must not simply execute:
 
-## Event
+    UPDATE teams
+    SET score = 0;
 
-- Registration deadline must be after event creation.
-- Event must have a name.
+without recording history.
 
----
+Instead, each affected Team receives a ScoreEvent.
 
-# 11. Normalisation
+Example:
 
-A relational implementation would follow Third Normal Form (3NF).
+    Team score before reset = 120
 
-Benefits include:
+produces:
 
-- Reduced redundancy
-- Improved consistency
-- Easier maintenance
-- Better scalability
+    previous_score = 120
+    amount = -120
+    new_score = 0
+    reason = "All scores reset"
+    event_type = "RESET"
 
----
+The team score is then changed to zero.
 
-# 12. Future SQL Schema
+All affected Team updates and ScoreEvent records should occur within one transaction.
 
-## Event
-
-```sql
-Event
-
-event_id
-
-event_name
-
-event_date
-
-registration_deadline
-
-status
-```
+If any part fails, the reset operation should roll back.
 
 ---
 
-## Team
+# 22. Score History
 
-```sql
-Team
+Score history allows administrators to inspect previous scoring operations.
 
-team_id
+Typical history information includes:
 
-event_id
+| Team | Change | Previous | New | Reason | Time |
+|---|---:|---:|---:|---|---|
+| All-Stars | +15 | 85 | 100 | 15 points awarded | 19:30 |
+| Code Warriors | -5 | 95 | 90 | Rule penalty | 19:32 |
+| Dream Team | +20 | 70 | 90 | Round winner | 19:35 |
 
-team_name
+Score history should normally be ordered:
 
-score
+    ORDER BY created_at DESC
 
-position
-```
-
----
-
-## Member
-
-```sql
-Member
-
-member_id
-
-team_id
-
-full_name
-
-email
-
-phone
-```
+The administration interface may initially display only recent entries while allowing the administrator to expand or scroll through additional history.
 
 ---
 
-## Administrator
+# 23. Soft Deletes
 
-```sql
-Administrator
+Teams should use soft deletion rather than immediate physical deletion.
 
-admin_id
+The Team table therefore contains:
 
-username
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 
-password_hash
-```
+When an administrator deletes a Team:
 
----
+    is_deleted = TRUE
 
-# 13. Backup Strategy
+rather than:
 
-Current
+    DELETE FROM teams
 
-- Firebase cloud persistence
+Active-team queries therefore include:
 
-Future
+    WHERE is_deleted = FALSE
 
-- Daily database backups
-- Weekly snapshots
-- Disaster recovery plan
+This preserves:
 
----
+- Score history.
+- Event history.
+- Audit information.
+- Referential integrity.
 
-# 14. Security
-
-Current implementation
-
-- Cloud-hosted data
-- Administrator authentication
-
-Recommended improvements
-
-- Password hashing
-- Encrypted credentials
-- Role-based access control
-- Database rules
-- Audit logs
+A future administrative recovery feature could restore a deleted Team.
 
 ---
 
-# 15. Scalability
+# 24. Leaderboard Calculation
 
-The database can be extended to support:
+The leaderboard is derived from active Teams.
 
-- Multiple competitions
-- Multiple campuses
-- Historical events
-- Team statistics
-- Player statistics
-- Match schedules
-- Attendance
-- Notifications
+A basic query is:
 
----
+    SELECT
+        team_id,
+        name,
+        score
+    FROM teams
+    WHERE event_id = ?
+      AND is_deleted = FALSE
+    ORDER BY score DESC;
 
-# 16. Performance
+Leaderboard position is calculated from this ordered result.
 
-The database has been designed to support:
+The application may later introduce explicit tie-handling rules.
 
-- Fast score retrieval
-- Real-time updates
-- Efficient team lookup
-- Minimal network latency
+Possible ranking strategies include:
 
----
+- Competition ranking.
+- Dense ranking.
+- Shared positions.
 
-# 17. Future Improvements
-
-- PostgreSQL migration
-- Stored procedures
-- Database indexing
-- Audit tables
-- Soft deletes
-- Historical score tracking
-- Analytics warehouse
+The final ranking rule should be implemented consistently by the backend.
 
 ---
 
-# 18. Summary
+# 25. Indexing Strategy
 
-The Friends Like These database provides a flexible and scalable data model capable of supporting real-time event management.
+Indexes should support common queries.
 
-The Firebase implementation enables immediate synchronisation between clients while maintaining a simple data structure. The accompanying relational design demonstrates how the application can evolve into an enterprise-grade solution using a traditional SQL database.
+PostgreSQL automatically indexes primary keys and unique constraints.
+
+Additional indexes should be considered for frequently accessed foreign keys and historical queries.
+
+Recommended indexes include:
+
+    CREATE INDEX idx_teams_event_id
+    ON teams(event_id);
+
+    CREATE INDEX idx_team_members_team_id
+    ON team_members(team_id);
+
+    CREATE INDEX idx_score_events_team_id
+    ON score_events(team_id);
+
+    CREATE INDEX idx_score_events_event_id
+    ON score_events(event_id);
+
+    CREATE INDEX idx_score_events_created_at
+    ON score_events(created_at DESC);
+
+A leaderboard-specific index may later be introduced if required by measured performance.
+
+Premature indexing should be avoided.
+
+Indexes should be added according to actual query patterns and performance measurements.
+
+---
+
+# 26. Normalisation
+
+The relational design follows Third Normal Form where practical.
+
+Examples include:
+
+- Event settings are separated from Teams.
+- Team members are stored individually.
+- Users are stored independently from scoring records.
+- Score history is separated from current Team state.
+
+The design avoids storing structures such as:
+
+    team.members = "Alice, John, Sipho"
+
+Instead:
+
+    Team
+      |
+      +---- TeamMember
+      +---- TeamMember
+      +---- TeamMember
+
+This enables individual member records to be searched, validated and managed independently.
+
+---
+
+# 27. Spring Boot Persistence Architecture
+
+Database access follows a layered backend architecture.
+
+                    Controller
+                        │
+                        ▼
+                      DTO
+                        │
+                        ▼
+                     Service
+                        │
+                        ▼
+                   Repository
+                        │
+                        ▼
+                  JPA / Hibernate
+                        │
+                        ▼
+                    PostgreSQL
+
+Each layer has a distinct responsibility.
+
+## Controller
+
+Handles HTTP requests and responses.
+
+It should not contain database logic.
+
+## DTO
+
+Defines data entering or leaving the API.
+
+Entities should not automatically be exposed directly to frontend clients.
+
+## Service
+
+Contains business rules.
+
+Examples include:
+
+- Score calculation.
+- Team validation.
+- Reset operations.
+- Soft deletion.
+- Event state validation.
+
+## Repository
+
+Provides persistence operations using Spring Data JPA.
+
+## Entity
+
+Maps the Java domain/persistence model to PostgreSQL tables.
+
+---
+
+# 28. Spring Data JPA
+
+The backend will use Spring Data JPA repositories.
+
+Conceptually:
+
+    EventRepository
+    EventSettingsRepository
+    TeamRepository
+    TeamMemberRepository
+    UserRepository
+    ScoreEventRepository
+
+Repositories handle persistence concerns.
+
+Business logic must remain in services rather than being placed directly inside controllers.
+
+---
+
+# 29. Transaction Management
+
+Operations that modify related records must be transactional.
+
+Examples include:
+
+- Awarding points.
+- Deducting points.
+- Custom score adjustments.
+- Resetting all scores.
+- Creating a Team with its members.
+- Updating Team membership.
+
+Spring's transaction management will be used at the service layer.
+
+Conceptually:
+
+    Controller
+        |
+        v
+    ScoreService
+        |
+        | Transaction begins
+        |
+        +--> Update Team
+        |
+        +--> Save ScoreEvent
+        |
+        | Commit
+        v
+    Database
+
+If saving the ScoreEvent fails, the Team score update must also fail.
+
+The database must never contain a score change without its corresponding history record.
+
+---
+
+# 30. Concurrency
+
+The application is intended to support multiple devices simultaneously.
+
+Examples include:
+
+- Administrator PC.
+- Administrator tablet.
+- Mobile phone.
+- Public scoreboard.
+- Television display.
+
+This creates the possibility of simultaneous score updates.
+
+The backend must therefore treat PostgreSQL as the authoritative source of score state.
+
+The service should retrieve and update current state transactionally rather than trusting a score value supplied by a client.
+
+As the system develops, concurrency control may use:
+
+- JPA optimistic locking.
+- A version column.
+- Transaction isolation.
+- Database locking where specifically necessary.
+
+Optimistic locking is the preferred initial approach for normal administrative operations.
+
+---
+
+# 31. Authentication
+
+Administrative API operations must require authentication.
+
+The target authentication flow is:
+
+    Administrator
+         |
+         v
+    Login Request
+         |
+         v
+    Spring Security
+         |
+         v
+    Credential Validation
+         |
+         v
+       JWT
+         |
+         v
+    Authenticated API Requests
+
+Passwords are stored only as secure hashes.
+
+JWT tokens must not contain passwords or sensitive credentials.
+
+---
+
+# 32. Authorisation
+
+The application should distinguish between public and protected operations.
+
+Public operations may include:
+
+- View leaderboard.
+- View active event.
+- View registration information.
+
+Protected operations include:
+
+- Add Team.
+- Edit Team.
+- Delete Team.
+- Award points.
+- Deduct points.
+- Custom score adjustment.
+- Reset scores.
+- Change event settings.
+- Manage administrators.
+
+Spring Security will enforce these permissions.
+
+---
+
+# 33. Database Security
+
+Security controls include:
+
+- Password hashing.
+- Parameterised queries through JPA.
+- Restricted database credentials.
+- Environment-based configuration.
+- Authentication.
+- Role-based authorisation.
+- Input validation.
+- Audit records.
+- HTTPS in production.
+
+Database credentials must never be committed to GitHub.
+
+Production credentials should be supplied using environment variables or a secure secret-management mechanism.
+
+---
+
+# 34. API and Database Separation
+
+The React application must never contain PostgreSQL credentials.
+
+The architecture is:
+
+    React
+       |
+       | HTTPS
+       v
+    Spring Boot REST API
+       |
+       | JDBC / JPA
+       v
+    PostgreSQL
+
+and never:
+
+    React
+       |
+       X
+       |
+    PostgreSQL
+
+This ensures database access remains controlled by the backend.
+
+---
+
+# 35. Responsive Client Support
+
+Database design is independent of screen size.
+
+The same backend API serves:
+
+- Television displays.
+- Desktop computers.
+- Laptops.
+- Tablets.
+- Mobile phones.
+
+The React frontend is responsible for responsive presentation.
+
+The backend provides consistent JSON resources regardless of the requesting device.
+
+This allows multiple device types to display the same authoritative event state.
+
+---
+
+# 36. Real-Time Updates
+
+The original Firebase implementation provided native real-time synchronisation.
+
+PostgreSQL itself does not replace the client synchronisation behaviour provided by Firebase.
+
+The rebuilt architecture separates persistence from real-time communication.
+
+Initial versions may use normal REST API refreshes.
+
+The architecture can later introduce:
+
+- WebSockets.
+- Server-Sent Events.
+- Spring WebSocket.
+- STOMP messaging.
+
+A future real-time architecture could be:
+
+                    PostgreSQL
+                         │
+                         ▼
+                    Spring Boot
+                         │
+                    WebSocket
+                         │
+              ┌──────────┼──────────┐
+              ▼          ▼          ▼
+             TV         Phone       PC
+
+A score update performed on an administrator device could therefore immediately update connected leaderboard displays.
+
+---
+
+# 37. Backup and Recovery
+
+Production PostgreSQL deployments require a defined backup strategy.
+
+The target strategy should include:
+
+- Automated database backups.
+- Regular snapshots.
+- Backup retention.
+- Recovery testing.
+- Production database monitoring.
+
+A backup strategy is only effective if restoration has been tested.
+
+---
+
+# 38. Data Retention
+
+Historical Events and ScoreEvents should normally be retained.
+
+Completed Events provide useful information for:
+
+- Previous competition results.
+- Participation history.
+- Event analytics.
+- Score analysis.
+- Future reporting.
+
+Historical data should therefore not automatically be deleted when an Event is completed.
+
+---
+
+# 39. Scalability
+
+The relational architecture allows Friends Like These to grow beyond one games night.
+
+Future extensions could support:
+
+- Multiple events.
+- Multiple campuses.
+- Multiple venues.
+- Event seasons.
+- Historical leaderboards.
+- Team statistics.
+- Participant statistics.
+- Attendance.
+- Registration management.
+- Match schedules.
+- Notifications.
+- Event analytics.
+- Administrator audit trails.
+- Reporting dashboards.
+
+A future Campus entity could introduce:
+
+    Campus
+       |
+       +---- Event
+       |
+       +---- Event
+       |
+       +---- Event
+
+without fundamentally changing the Team and ScoreEvent model.
+
+---
+
+# 40. Performance Strategy
+
+The database is designed around the application's most common operations.
+
+These include:
+
+- Retrieve active Event.
+- Retrieve leaderboard.
+- Retrieve Teams.
+- Retrieve Team members.
+- Update Team score.
+- Retrieve recent score history.
+- Retrieve event settings.
+
+Current score is deliberately stored in the Team table so that the leaderboard does not need to recalculate the complete ScoreEvent history every time it loads.
+
+ScoreEvent remains the historical audit trail.
+
+This provides both:
+
+    Fast current-state retrieval
+
+and:
+
+    Complete historical records
+
+---
+
+# 41. Migration from Frontend State
+
+During early frontend development, Teams and scores are stored in React state.
+
+For example:
+
+    const [teams, setTeams] = useState(...)
+
+This is temporary development data.
+
+Once the Spring Boot API is integrated:
+
+    React State
+         |
+         | replaced by
+         v
+    REST API
+         |
+         v
+    Spring Boot
+         |
+         v
+    PostgreSQL
+
+The frontend will request Team information from the backend rather than treating hard-coded React objects as permanent application data.
+
+---
+
+# 42. Migration from Firebase
+
+The rebuilt application does not require the original Firebase data structure to determine the new relational schema.
+
+If historical Firebase data needs to be preserved, a migration process can later:
+
+    Firebase
+       |
+       v
+    Export
+       |
+       v
+    Transform
+       |
+       v
+    Validate
+       |
+       v
+    PostgreSQL
+
+The transformation process would map:
+
+    Firebase event
+        -> Event / EventSettings
+
+    Firebase teams
+        -> Team
+
+    Firebase members
+        -> TeamMember
+
+    Firebase scores
+        -> Team / ScoreEvent
+
+Historical score events can only be migrated if the original Firebase data contains sufficient history.
+
+If only current scores were retained, historical ScoreEvent records cannot be reconstructed reliably and should not be invented.
+
+---
+
+# 43. Future Database Improvements
+
+Potential future improvements include:
+
+- Flyway database migrations.
+- Optimistic locking.
+- Expanded audit logging.
+- Campus entity.
+- Venue entity.
+- Registration entity.
+- Event analytics.
+- Archival policies.
+- Database monitoring.
+- Read caching.
+- Advanced indexing.
+- Reporting database.
+- Analytics warehouse.
+
+These should be introduced when required rather than increasing the complexity of the first backend unnecessarily.
+
+---
+
+# 44. Final Database Model
+
+The core relational model is:
+
+                         EVENT
+                           |
+              +------------+------------+
+              |                         |
+              v                         v
+       EVENT_SETTINGS                  TEAM
+                                         |
+                                         |
+                                         v
+                                   TEAM_MEMBER
+
+                         EVENT
+                           |
+                           |
+                           v
+                      SCORE_EVENT
+                        /     \
+                       /       \
+                      v         v
+                    TEAM       USER
+
+The responsibilities are:
+
+    Event
+        Competition identity and lifecycle.
+
+    EventSettings
+        Configurable event settings.
+
+    Team
+        Current participating team state and score.
+
+    TeamMember
+        Individual participants.
+
+    User
+        Authenticated administrators and authorised users.
+
+    ScoreEvent
+        Historical scoring audit trail.
+
+---
+
+# 45. Summary
+
+The rebuilt Friends Like These application uses PostgreSQL as its target relational database and Spring Boot as the controlled backend access layer.
+
+The design replaces the direct Firebase persistence model used by the original Campus Key implementation with a structured relational architecture.
+
+The core database consists of:
+
+- Event.
+- EventSettings.
+- Team.
+- TeamMember.
+- User.
+- ScoreEvent.
+
+The Team entity stores the current score for efficient leaderboard retrieval, while ScoreEvent maintains the complete history of scoring operations.
+
+Spring Boot services are responsible for enforcing business rules and transactional consistency, while PostgreSQL provides the final layer of relational integrity.
+
+The architecture supports the application's immediate requirements while leaving room for future functionality such as multiple events, campuses, historical analytics, additional administrator roles and real-time WebSocket communication.
+
+The next implementation stage is to translate this database design into the Spring Boot backend through:
+
+    PostgreSQL Database
+            ↓
+    JPA Entities
+            ↓
+    Repositories
+            ↓
+    Services
+            ↓
+    DTOs
+            ↓
+    REST Controllers
+            ↓
+    React Integration
