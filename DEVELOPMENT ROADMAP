@@ -1,0 +1,635 @@
+# Friends Like These Development Roadmap
+
+## Purpose
+
+This document tracks the planned development sequence for the Friends Like These rebuild.
+
+The project is being developed incrementally so that each major layer is working before the next layer is introduced.
+
+---
+
+# Phase 1: Frontend Foundation
+
+Status: In progress
+
+The initial goal was to rebuild the original Friends Like These interface using React and TypeScript.
+
+Completed or substantially implemented work includes:
+
+- React project setup
+- TypeScript
+- Vite
+- Application header
+- Public scoreboard
+- Team cards
+- Team ranking
+- Medal badges
+- Registration countdown
+- Registration QR interface
+- Admin dashboard
+- Event settings
+- Team management
+- Add Team
+- Edit Team
+- Delete Team
+- Delete confirmation
+- Undo deletion
+- Quick score controls
+- Custom score adjustments
+- Score history
+- Reset All Scores confirmation
+- Responsive layouts
+
+---
+
+# Phase 2: Frontend Cleanup
+
+Before backend integration, the frontend should be cleaned and stabilised.
+
+Tasks include:
+
+- Remove unused Java files from the frontend project
+- Ensure non-JSX models use `.ts`
+- Ensure JSX components use `.tsx`
+- Review TypeScript model naming
+- Run ESLint
+- Run production build
+- Verify no unused imports
+- Verify modal behaviour
+- Verify responsive behaviour
+- Verify score-management behaviour
+
+Target devices:
+
+```text
+Mobile: approximately 360px and above
+Tablet
+Desktop/laptop
+1920 x 1080 TV
+```
+
+---
+
+# Phase 3: Backend Project Setup
+
+Create a separate IntelliJ project:
+
+```text
+friends-like-these-backend
+```
+
+Planned configuration:
+
+```text
+Java 21
+Maven
+Spring Boot
+```
+
+Initial dependencies:
+
+- Spring Web
+- Spring Data JPA
+- PostgreSQL Driver
+- Jakarta Validation
+- Spring Security
+- Lombok
+- Spring Boot DevTools
+
+JWT dependencies will be added when authentication development begins.
+
+---
+
+# Phase 4: PostgreSQL Setup
+
+Configure a local PostgreSQL development database.
+
+Initial work includes:
+
+- Create development database
+- Configure database credentials
+- Configure Spring datasource
+- Configure JPA
+- Verify backend can connect
+- Verify application starts successfully
+
+Sensitive credentials must not be committed to GitHub.
+
+---
+
+# Phase 5: Team Domain
+
+The first backend domain will be Team.
+
+Development order:
+
+```text
+Team
+  |
+  v
+TeamRepository
+  |
+  v
+TeamService
+  |
+  v
+TeamController
+```
+
+The first API milestone should provide:
+
+```text
+GET    /api/teams
+POST   /api/teams
+PUT    /api/teams/{id}
+DELETE /api/teams/{id}
+```
+
+Required behaviour includes:
+
+- Retrieve teams
+- Add team
+- Update team
+- Delete team
+- Validate team information
+- Handle missing teams
+- Prevent invalid operations
+
+---
+
+# Phase 6: DTOs and Validation
+
+Once basic Team CRUD works, introduce explicit API DTOs where appropriate.
+
+Possible classes:
+
+```text
+CreateTeamRequest
+UpdateTeamRequest
+TeamResponse
+```
+
+Validation should cover important inputs such as:
+
+- Required team name
+- Valid members
+- Valid identifiers
+- Duplicate constraints
+
+Backend validation remains mandatory even when React also validates input.
+
+---
+
+# Phase 7: Exception Handling
+
+Create centralised backend error handling.
+
+Potential exceptions include:
+
+```text
+TeamNotFoundException
+DuplicateTeamException
+InvalidScoreAdjustmentException
+```
+
+Add a global exception handler so the API returns consistent error responses.
+
+---
+
+# Phase 8: Scoring Domain
+
+Move score management from React-only state into Spring Boot.
+
+Implement operations for:
+
+- Awarding points
+- Deducting points
+- Custom adjustments
+- Preventing negative scores
+- Resetting all scores
+
+The backend service must enforce scoring rules.
+
+React should not be the only place where these rules exist.
+
+---
+
+# Phase 9: Score History Persistence
+
+Create a persistent ScoreEvent model.
+
+Initial information:
+
+```text
+id
+teamId
+amount
+reason
+timestamp
+```
+
+A score operation should update the team and create the corresponding score event as part of one consistent backend operation.
+
+Score history should then survive:
+
+- Browser refresh
+- Application restart
+- Different client devices
+
+---
+
+# Phase 10: Reset All Scores
+
+Move Reset All Scores into the backend.
+
+Requirements:
+
+- Protected admin operation
+- Confirmation remains in React
+- Backend sets relevant team scores to zero
+- Score reset activity should be auditable
+
+The final history strategy will be decided during implementation.
+
+---
+
+# Phase 11: Event Settings
+
+Move event configuration into persistent backend storage.
+
+Initial setting:
+
+```text
+registrationDeadline
+```
+
+Potential future settings:
+
+```text
+eventName
+registrationOpen
+registrationUrl
+eventStart
+eventEnd
+```
+
+React should retrieve these settings from the API.
+
+---
+
+# Phase 12: Authentication
+
+Introduce Spring Security.
+
+Implement:
+
+- User model
+- Authentication service
+- Password hashing
+- Login endpoint
+- JWT creation
+- JWT validation
+- Protected routes
+
+Example:
+
+```text
+POST /api/auth/login
+```
+
+The backend must never store plain-text passwords.
+
+---
+
+# Phase 13: Authorisation
+
+Separate public and administrative capabilities.
+
+Public users should be able to view scoreboard information.
+
+Administrative users should be able to:
+
+- Add teams
+- Edit teams
+- Delete teams
+- Adjust scores
+- Reset scores
+- Change event settings
+
+Administrative API operations must be protected server-side.
+
+---
+
+# Phase 14: React API Integration
+
+Replace temporary in-memory React data with backend calls.
+
+Current:
+
+```text
+React state
+```
+
+Target:
+
+```text
+React
+  |
+  v
+Spring Boot API
+  |
+  v
+PostgreSQL
+```
+
+Integration work includes:
+
+- Fetch teams
+- Add teams through API
+- Update teams through API
+- Delete teams through API
+- Adjust scores through API
+- Retrieve score history
+- Retrieve event settings
+- Update event settings
+
+---
+
+# Phase 15: Loading and Error States
+
+Once API integration begins, the frontend must handle network behaviour properly.
+
+Add:
+
+- Loading states
+- API error messages
+- Retry behaviour where appropriate
+- Empty states
+- Authentication failures
+- Server validation messages
+
+The interface must not assume every network request succeeds.
+
+---
+
+# Phase 16: Real-Time Score Synchronisation
+
+The live event experience requires multiple devices to remain synchronised.
+
+Example:
+
+```text
+Admin Laptop
+     |
+     | +20
+     v
+Spring Boot
+     |
+     v
+Database
+     |
+     v
+TV Scoreboard updates
+```
+
+The TV should not need manual refresh.
+
+The implementation may use:
+
+- Server-Sent Events
+
+or:
+
+- WebSockets
+
+The final technology will be selected after the REST API is stable.
+
+---
+
+# Phase 17: Registration Integration
+
+The original project used Google Forms and Google Sheets for registration.
+
+The rebuilt system will revisit this integration after the core backend is stable.
+
+Potential flow:
+
+```text
+Participant
+    |
+    v
+Google Form
+    |
+    v
+Google Sheets
+    |
+    v
+Spring Boot
+    |
+    v
+PostgreSQL
+```
+
+The exact integration design will be determined during this phase.
+
+---
+
+# Phase 18: Multi-Device Testing
+
+The application must be tested across:
+
+- TV
+- Desktop
+- Laptop
+- Tablet
+- Mobile phone
+
+Testing must include more than visual layout.
+
+Verify:
+
+- Scoreboard readability
+- Touch target sizes
+- Modal positioning
+- Scrolling
+- Score controls
+- Navigation
+- Countdown
+- Score history
+- Real-time updates
+- Network recovery
+
+---
+
+# Phase 19: Automated Testing
+
+Add appropriate backend tests.
+
+Potential testing layers:
+
+```text
+Unit tests
+Service tests
+Repository tests
+Controller/API tests
+```
+
+Important business rules should be covered, especially:
+
+- Score cannot fall below zero
+- Team operations
+- Score-event creation
+- Authentication
+- Authorisation
+
+Frontend testing can then be expanded where it provides meaningful value.
+
+---
+
+# Phase 20: Docker
+
+Containerise the backend once the application architecture is stable.
+
+Potential development architecture:
+
+```text
+React
+Spring Boot container
+PostgreSQL container
+```
+
+Production architecture may differ because PostgreSQL will eventually be provided as a managed Azure service.
+
+---
+
+# Phase 21: GitHub Actions
+
+Introduce CI/CD.
+
+A backend pipeline should eventually:
+
+```text
+Push
+  |
+  v
+Build
+  |
+  v
+Test
+  |
+  v
+Package
+  |
+  v
+Deploy
+```
+
+Frontend automation can also run:
+
+- npm install
+- lint
+- build
+
+before deployment.
+
+---
+
+# Phase 22: Azure Deployment
+
+Planned backend deployment:
+
+```text
+Spring Boot
+     |
+     v
+Azure App Service
+```
+
+Planned database:
+
+```text
+Azure Database for PostgreSQL
+Flexible Server
+```
+
+Environment-specific configuration will be supplied through secure environment settings rather than committed credentials.
+
+---
+
+# Phase 23: Production Integration
+
+Connect the deployed frontend to the production API.
+
+Verify:
+
+- HTTPS
+- CORS
+- Authentication
+- Database connectivity
+- Score updates
+- Real-time communication
+- Responsive behaviour
+- Error handling
+
+---
+
+# Phase 24: Documentation
+
+Documentation should evolve with the implementation.
+
+Maintain:
+
+```text
+README.md
+docs/ARCHITECTURE.md
+docs/DEVELOPMENT_ROADMAP.md
+docs/FRONTEND.md
+```
+
+Later documentation may include:
+
+```text
+BACKEND.md
+API.md
+DEPLOYMENT.md
+DATABASE.md
+SECURITY.md
+```
+
+These should be created when those parts of the system actually exist rather than documenting unimplemented behaviour as if it were complete.
+
+---
+
+# Immediate Next Step
+
+The immediate next major development phase is:
+
+```text
+Create Friends Like These Backend
+```
+
+Then:
+
+```text
+Spring Boot starts successfully
+        |
+        v
+PostgreSQL connection
+        |
+        v
+Team entity
+        |
+        v
+TeamRepository
+        |
+        v
+TeamService
+        |
+        v
+TeamController
+        |
+        v
+Team CRUD API
+```
+
+This gives the project its first functioning backend vertical slice.
