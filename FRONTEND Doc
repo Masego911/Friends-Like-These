@@ -1,468 +1,758 @@
-# Frontend Documentation
+# Friends Like These Frontend
 
-## Friends Like These: Campus Key Edition
+## Overview
 
----
+The Friends Like These frontend is being rebuilt using React and TypeScript.
 
-# 1. Introduction
+Its purpose is to provide two primary interfaces:
 
-## Purpose
+1. Public scoreboard
+2. Administration dashboard
 
-This document describes the frontend architecture of the **Friends Like These: Campus Key Edition** application.
-
-It explains how the user interface is organised, how data is presented, how user interactions are handled, and how the frontend communicates with external services.
-
-The goal of this documentation is to provide developers with a clear understanding of the application's presentation layer and make future maintenance and enhancement easier.
+The frontend is designed to operate across TVs, desktop computers, laptops, tablets and mobile phones.
 
 ---
 
-# 2. Frontend Overview
+# Technology
 
-The frontend is responsible for:
+The current frontend uses:
 
-* Displaying the live scoreboard
-* Rendering registered teams
-* Displaying rankings
-* Managing the administrator interface
-* Displaying the registration countdown
-* Displaying the registration QR code
-* Receiving live score updates
-* Providing a responsive experience across devices
+- React
+- TypeScript
+- Vite
+- CSS
+- ESLint
 
 ---
 
-# 3. Frontend Technology Stack
+# Application Entry Point
 
-| Technology        | Purpose                        |
-| ----------------- | ------------------------------ |
-| HTML5             | Page structure                 |
-| CSS3              | Styling and responsive layouts |
-| JavaScript (ES6)  | Application logic              |
-| Firebase          | Real-time score updates        |
-| Google Sheets API | Team registration data         |
-| Google Forms      | Team registration              |
-| QR Code API       | Registration QR generation     |
+The application starts through:
 
----
-
-# 4. User Interface Overview
-
-The frontend consists of three primary interfaces.
-
-## 4.1 Live Scoreboard
-
-The public interface displayed during the event.
-
-Responsibilities:
-
-* Display rankings
-* Display scores
-* Display team members
-* Display countdown
-* Display QR code
-* Animate score updates
-
----
-
-## 4.2 Administrator Login
-
-A secure page allowing authorised users to access the administration panel.
-
-Responsibilities:
-
-* Password validation
-* Access control
-* Error feedback
-
----
-
-## 4.3 Administrator Dashboard
-
-Provides event management functionality.
-
-Responsibilities:
-
-* Add teams
-* Remove teams
-* Increase scores
-* Deduct scores
-* Reset competition
-* Reload registration data
-
----
-
-# 5. Component Architecture
-
-```
-Application
-
-│
-
-├── Header
-
-├── Leaderboard
-
-│ ├── Team Card
-
-│ ├── Rank Display
-
-│ └── Score Display
-
-├── Countdown Timer
-
-├── QR Registration
-
-├── Login Screen
-
-└── Admin Dashboard
+```text
+src/main.tsx
 ```
 
----
+The primary application component is:
 
-# 6. Component Descriptions
-
-## Header
-
-Displays:
-
-* Event title
-* Branding
-* Live indicator
-* Administrator access button
-
-Responsibilities:
-
-* Branding
-* Navigation
-* User orientation
-
----
-
-## Leaderboard
-
-Displays:
-
-* Team rankings
-* Scores
-* Team members
-
-Responsibilities:
-
-* Sort rankings
-* Render team cards
-* Highlight top three teams
-* Animate score changes
-
----
-
-## Team Card
-
-Displays:
-
-* Position
-* Team name
-* Members
-* Current score
-
-Responsibilities:
-
-* Present team information
-* Display score updates
-* Highlight ranking
-
----
-
-## Countdown Timer
-
-Displays:
-
-* Hours
-* Minutes
-* Seconds
-
-Responsibilities:
-
-* Calculate remaining time
-* Update every second
-* Display registration status
-
----
-
-## QR Registration Component
-
-Displays:
-
-* Registration QR code
-
-Responsibilities:
-
-* Generate QR image
-* Link to registration form
-
----
-
-## Administrator Dashboard
-
-Displays:
-
-* Teams
-* Current scores
-* Management buttons
-
-Responsibilities:
-
-* Update scores
-* Manage teams
-* Reset competition
-
----
-
-# 7. Responsive Design
-
-The application supports multiple screen sizes.
-
-## Desktop
-
-Optimised for:
-
-* Laptops
-* Desktop monitors
-
----
-
-## Tablet
-
-Adjustments include:
-
-* Flexible layouts
-* Larger controls
-* Improved spacing
-
----
-
-## Mobile
-
-Optimisations:
-
-* Vertical layouts
-* Touch-friendly buttons
-* Reduced spacing
-* Responsive typography
-
----
-
-## Television Display
-
-Optimised for:
-
-* Large screens
-* Projectors
-* Event displays
-
-Features:
-
-* Large typography
-* High contrast
-* Readable rankings
-
----
-
-# 8. Styling Guide
-
-## Typography
-
-Primary fonts:
-
-* Black Han Sans
-* Barlow
-* Barlow Condensed
-
-Purpose:
-
-* High readability
-* Broadcast-style appearance
-
----
-
-## Colour Palette
-
-Primary
-
-* Teal
-
-Secondary
-
-* Orange
-
-Background
-
-* Dark Navy
-
-Highlights
-
-* Gold
-* Silver
-* Bronze
-
-Purpose:
-
-* High contrast
-* Event branding
-* Ranking emphasis
-
----
-
-# 9. Animations
-
-The interface uses subtle animations to improve user experience.
-
-Examples:
-
-* Loading spinner
-* Score flash
-* Score increment animation
-* Live indicator pulse
-* Hover effects
-
-Purpose:
-
-* Improve feedback
-* Increase engagement
-* Highlight important events
-
----
-
-# 10. User Flow
-
-## Audience
-
+```text
+src/App.tsx
 ```
-Open Website
 
-↓
+`App.tsx` currently owns the main application state while the backend is still being developed.
 
-View Live Leaderboard
+---
 
-↓
+# Current Application State
 
-Watch Scores Update
+The frontend currently manages:
 
-↓
+```text
+view
+eventSettings
+teams
+scoreEvents
+teamPendingDeletion
+deletedTeam
+```
 
-Scan QR Code
+This architecture is appropriate for the current frontend-development stage but is not intended to be the final persistence architecture.
 
-↓
+Once Spring Boot is connected, persistent state will move to the backend.
 
-Register Team
+---
+
+# Application Views
+
+The application currently has two major views:
+
+```text
+scoreboard
+admin
+```
+
+The application header controls navigation between these interfaces.
+
+---
+
+# Public Scoreboard
+
+The scoreboard is intended for participants and spectators.
+
+It displays:
+
+- Teams
+- Scores
+- Rankings
+- Team members
+- Medal indicators
+- Registration countdown
+- Registration QR code
+
+The scoreboard should remain visually clear when displayed on a large TV during a live event.
+
+---
+
+# Team Ranking
+
+Teams are displayed according to score.
+
+The highest-scoring teams appear first.
+
+The leading teams receive visual ranking indicators.
+
+The top three positions use:
+
+- Gold
+- Silver
+- Bronze
+
+This provides immediate visual feedback during a competition.
+
+---
+
+# Team Components
+
+The team-related components include:
+
+```text
+components/team/
+|
+|-- MedalBadge
+|-- TeamCard
+`-- TeamList
+```
+
+## MedalBadge
+
+Displays ranking recognition for leading teams.
+
+## TeamCard
+
+Displays information for an individual team.
+
+## TeamList
+
+Coordinates the display of multiple teams.
+
+---
+
+# Scoreboard Components
+
+The scoreboard area includes:
+
+```text
+components/scoreboard/
+|
+|-- Countdown
+|-- RegistrationQR
+`-- Scoreboard
+```
+
+## Countdown
+
+Displays time remaining before the registration deadline.
+
+## RegistrationQR
+
+Displays registration information and access to the registration process.
+
+## Scoreboard
+
+Coordinates the public scoreboard interface.
+
+---
+
+# Admin Dashboard
+
+The Admin Dashboard provides event-management functionality.
+
+Its responsibilities currently include:
+
+- Event settings
+- Team management
+- Score management
+- Score history
+- Modal workflows
+
+The dashboard layout has been redesigned to avoid presenting every administrative feature as an equally sized panel.
+
+Important information is grouped according to function and priority.
+
+---
+
+# Admin Components
+
+Current administration components include:
+
+```text
+components/admin/
+|
+|-- AddTeamForm
+|-- AdminDashboard
+|-- AdminEventSettings
+|-- AdminTeamList
+|-- DeleteTeamDialog
+|-- EditTeamForm
+|-- ScoreAdjustmentForm
+|-- ScoreHistory
+`-- UndoDeleteToast
 ```
 
 ---
 
-## Administrator
+# AdminEventSettings
 
+The event-settings component currently manages the registration deadline.
+
+The deadline is stored in application state during the frontend phase.
+
+It will eventually be retrieved from and persisted through Spring Boot.
+
+---
+
+# AdminTeamList
+
+The team-management interface displays:
+
+- Team name
+- Member count
+- Current score
+- Quick scoring buttons
+- Custom score control
+- Edit
+- Delete
+
+The panel also provides access to adding a new team.
+
+Reset All Scores is positioned with team-management actions because it affects the complete team score set.
+
+---
+
+# Quick Score Controls
+
+Current score controls include:
+
+```text
++5
++10
++15
++20
+-5
+Custom
 ```
-Open Website
 
-↓
+Each button has a distinct colour treatment.
 
-Login
+The buttons use:
 
-↓
+- Coloured outlines
+- Light-opacity backgrounds
+- Hover feedback
+- Focus indicators
 
+This allows scoring controls to remain visually distinguishable without making the admin interface excessively saturated.
+
+---
+
+# Score Changes
+
+The current frontend score handler updates the relevant team.
+
+A score cannot become negative.
+
+Conceptually:
+
+```text
+newScore = max(0, currentScore + amount)
+```
+
+A corresponding score event is then added to score history.
+
+This logic will eventually move into the Spring Boot service layer so that the backend becomes responsible for enforcing the rule.
+
+---
+
+# Custom Score Adjustment
+
+The custom-score form allows the administrator to provide:
+
+- Team
+- Adjustment amount
+- Reason
+
+The form appears as a modal rather than permanently occupying dashboard space.
+
+This keeps the main administration interface focused on frequently used controls.
+
+---
+
+# Score History
+
+Score History displays scoring activity.
+
+A score event currently includes:
+
+```text
+id
+teamId
+amount
+reason
+timestamp
+```
+
+The panel is intentionally constrained to a fixed/controlled size.
+
+When the history becomes longer than the available space, the history area scrolls rather than continually increasing dashboard height.
+
+The interface can also provide an expanded view for easier review.
+
+---
+
+# Add Team
+
+Add Team opens in a modal.
+
+This prevents the team form from pushing the rest of the dashboard down when opened.
+
+The form receives the existing team list so that frontend validation can consider existing team information.
+
+Backend validation will later become authoritative.
+
+---
+
+# Edit Team
+
+Edit Team also opens in a centred modal.
+
+The modal:
+
+- Appears above the dashboard
+- Uses a backdrop
+- Remains within the viewport
+- Allows vertical scrolling when necessary
+- Adapts to smaller screens
+
+The editing form receives the selected team and existing teams.
+
+---
+
+# Delete Team
+
+Deleting a team uses a confirmation dialog.
+
+The team is not immediately removed when the administrator first presses Delete.
+
+The flow is:
+
+```text
+Delete
+  |
+  v
+Confirmation
+  |
+  +---- Cancel ----> No change
+  |
+  v
+Confirm
+  |
+  v
+Team removed
+```
+
+This reduces accidental destructive actions.
+
+---
+
+# Undo Delete
+
+After deletion, the application temporarily stores:
+
+```text
+team
+original index
+```
+
+An undo notification appears for six seconds.
+
+If Undo is selected, the original team object is inserted back into its previous position.
+
+Only the most recent deletion is currently retained for undo.
+
+The undo state currently exists only in memory.
+
+---
+
+# Reset All Scores
+
+Reset All Scores is a high-impact administrative operation.
+
+The interface therefore requires confirmation.
+
+The intended flow is:
+
+```text
+Reset All Scores
+       |
+       v
+Confirmation
+       |
+       +---- Cancel
+       |
+       v
+Confirm Reset
+       |
+       v
+All team scores = 0
+```
+
+Persistent auditing will be handled by the backend later.
+
+---
+
+# Modal Design
+
+Forms that represent temporary tasks use modal interfaces.
+
+These currently include:
+
+- Add Team
+- Edit Team
+- Custom Score Adjustment
+- Reset confirmation
+
+Modal design requirements include:
+
+- Centred positioning
+- Visible backdrop
+- Responsive width
+- Maximum viewport height
+- Internal scrolling when necessary
+- Appropriate accessibility roles
+
+---
+
+# Responsive Design
+
+The frontend must support four broad device categories.
+
+## Large TV
+
+Primary purpose:
+
+```text
+Public scoreboard
+```
+
+Requirements:
+
+- Large text
+- Clear scores
+- Strong ranking hierarchy
+- Distance readability
+- Minimal unnecessary controls
+
+---
+
+# Desktop and Laptop
+
+Primary purpose:
+
+```text
 Admin Dashboard
+and
+Public Scoreboard
+```
 
-↓
+Requirements:
 
-Manage Teams
+- Efficient use of horizontal space
+- Complete administration controls
+- Multiple dashboard regions where appropriate
+- Clear score history
 
-↓
+---
 
-Update Scores
+# Tablet
 
-↓
+Requirements:
 
-Firebase Synchronisation
+- Touch-friendly buttons
+- Reduced-column layouts
+- Responsive modals
+- No horizontal page overflow
+- Controls that remain usable in portrait and landscape orientations
 
-↓
+---
 
-Leaderboard Updates
+# Mobile Phone
+
+Requirements:
+
+- Single-column layouts where necessary
+- Large touch targets
+- Wrapped quick-score buttons
+- Responsive team cards
+- Modal forms that fit the viewport
+- Appropriate scrolling
+- No horizontal page overflow
+
+---
+
+# CSS Organisation
+
+Components use dedicated CSS files where appropriate.
+
+Examples include:
+
+```text
+AdminDashboard.tsx
+AdminDashboard.css
+
+AdminTeamList.tsx
+AdminTeamList.css
+
+ScoreHistory.tsx
+ScoreHistory.css
+```
+
+This keeps component styling easier to locate and maintain.
+
+---
+
+# Models
+
+Current frontend models include concepts such as:
+
+```text
+Team
+eventSettings
+scoreEvent
+```
+
+Files containing TypeScript types/interfaces but no JSX should use:
+
+```text
+.ts
+```
+
+rather than:
+
+```text
+.tsx
+```
+
+For example:
+
+```text
+Team.ts
+eventSettings.ts
+scoreEvent.ts
 ```
 
 ---
 
-# 11. Frontend Responsibilities
+# Configuration
 
-The frontend is responsible for:
+Static configuration is separated from administrator-editable event state.
 
-* Rendering the interface
-* Handling user interaction
-* Displaying live scores
-* Displaying countdown
-* Displaying rankings
-* Displaying registration information
+Configuration that is genuinely static may remain under:
 
-The frontend is **not** responsible for:
+```text
+src/config/
+```
 
-* Persistent data storage
-* Authentication logic
-* Business rules
-* Database management
-
-These responsibilities belong to backend services.
+Administrator-editable values should eventually be persisted through the backend rather than treated as permanent frontend configuration.
 
 ---
 
-# 12. Accessibility Considerations
+# Current Data Flow
 
-The interface was designed with usability in mind.
+The current frontend flow is approximately:
 
-Features include:
+```text
+App.tsx
+   |
+   |-- teams
+   |
+   |-- eventSettings
+   |
+   |-- scoreEvents
+   |
+   +---------------------+
+   |                     |
+   v                     v
+Scoreboard         AdminDashboard
+```
 
-* High colour contrast
-* Large typography
-* Responsive layouts
-* Touch-friendly controls
-* Clear visual hierarchy
+This means both public and admin views currently share the same React state.
 
-Future improvements may include:
+That is useful because a score changed in the admin interface immediately affects the scoreboard within the same running application instance.
 
-* Keyboard navigation
-* Screen reader support
-* ARIA labels
-* Improved accessibility compliance
-
----
-
-# 13. Performance Considerations
-
-The frontend has been designed to:
-
-* Minimise page reloads
-* Update scores in real time
-* Reduce unnecessary network requests
-* Optimise rendering performance
+It does not yet synchronise separate physical devices.
 
 ---
 
-# 14. Future Frontend Enhancements
+# Future Data Flow
 
-Potential future improvements include:
+After backend integration:
 
-* Dark/Light theme toggle
-* Team logos
-* Animated leaderboards
-* Sound effects
-* Multiple competitions
-* Live statistics
-* Search functionality
-* Internationalisation
-* Offline support
-* Progressive Web App (PWA)
+```text
+                Spring Boot
+                    |
+                    v
+                PostgreSQL
+                    |
+          ---------------------
+          |                   |
+          v                   v
+     Admin Device        Scoreboard Device
+```
+
+React will no longer be the permanent source of team and score data.
 
 ---
 
-# 15. Summary
+# Real-Time Requirement
 
-The frontend provides a responsive, real-time interface for managing and displaying the Friends Like These competition.
+One of the most important future frontend requirements is real-time synchronisation.
 
-It focuses on usability, responsiveness, live data presentation, and a clean event experience while integrating seamlessly with backend cloud services.
+Example:
+
+```text
+Admin uses phone
+      |
+      | awards +10
+      v
+Backend
+      |
+      v
+TV scoreboard changes
+```
+
+This must work even though the phone and TV are separate devices running separate browser sessions.
+
+That functionality requires backend communication and has not yet been implemented.
+
+---
+
+# Frontend Error Handling
+
+Once API integration begins, the frontend will need explicit states for:
+
+```text
+Loading
+Success
+Empty
+Validation error
+Network error
+Authentication error
+Server error
+```
+
+These should be designed intentionally rather than allowing failed requests to produce broken or blank interfaces.
+
+---
+
+# Accessibility
+
+The frontend should continue using accessible HTML patterns.
+
+Existing examples include:
+
+- Button elements for actions
+- Dialog roles
+- Alert-dialog roles for destructive confirmation
+- ARIA labels where the visible button text lacks sufficient context
+- Keyboard focus indicators
+
+Accessibility should be reviewed alongside responsive behaviour as components evolve.
+
+---
+
+# Frontend Testing Checklist
+
+Before backend integration, verify:
+
+- Application starts successfully
+- ESLint passes
+- Production build passes
+- Scoreboard renders
+- Admin dashboard renders
+- Add Team works
+- Edit Team works
+- Delete confirmation works
+- Undo Delete works
+- Quick scoring works
+- Custom scoring works
+- Score cannot fall below zero
+- Score History displays events
+- Reset confirmation works
+- Countdown works
+- QR interface renders
+- Modals remain centred
+- Mobile layout does not overflow horizontally
+- Tablet layout remains usable
+- Desktop dashboard remains organised
+- TV scoreboard remains readable
+
+---
+
+# Backend Integration Impact
+
+Several current frontend handlers will eventually change.
+
+Operations such as:
+
+```text
+handleAddTeam
+handleUpdateTeam
+handleConfirmDeleteTeam
+handleScoreChange
+handleResetAllScores
+handleDeadlineChange
+```
+
+currently manipulate React state.
+
+After integration, they will communicate with Spring Boot.
+
+For example:
+
+```text
+Current
+
+handleAddTeam
+    |
+    v
+setTeams()
+
+
+Future
+
+handleAddTeam
+    |
+    v
+POST /api/teams
+    |
+    v
+Spring Boot
+    |
+    v
+PostgreSQL
+    |
+    v
+React receives updated data
+```
+
+This is why backend development is the next major phase.
+
+---
+
+# Current Frontend Status
+
+The frontend has reached the point where the primary event-management workflows exist.
+
+Continuing to add large amounts of temporary frontend-only persistence would create code that must later be replaced.
+
+The next major development phase is therefore the Spring Boot backend.
