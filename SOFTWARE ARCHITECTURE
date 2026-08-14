@@ -1,491 +1,602 @@
-# Software Architecture
+# Friends Like These Architecture
 
-## Friends Like These: Campus Key Edition
+## 1. Purpose
 
----
+This document describes the intended architecture of the rebuilt Friends Like These application.
 
-# 1. Introduction
+Friends Like These is a live games-night scoring and event-management system.
 
-## Purpose
+The application must support multiple devices simultaneously, including:
 
-This document describes the overall software architecture of the Friends Like These: Campus Key Edition application.
+- TVs
+- Desktop computers
+- Laptops
+- Tablets
+- Mobile phones
 
-It explains the architectural decisions, design principles, major software components, interactions between components, and the technologies used to build the system.
-
-The objective is to provide developers with a comprehensive understanding of the system architecture to support maintenance, scalability, and future enhancements.
-
----
-
-# 2. System Overview
-
-Friends Like These is a cloud-based event management and live scoring platform designed to support Campus Key competitions.
-
-The application enables:
-
-* Live score management
-* Real-time leaderboard updates
-* Team registration
-* Event administration
-* Countdown management
-* QR code registration
-* Cloud synchronisation
-
-The system follows a layered architecture with clearly separated responsibilities.
+The architecture must therefore separate the user interface from persistent application state and business logic.
 
 ---
 
-# 3. Architectural Style
+# 2. High-Level Architecture
 
-The application adopts a combination of:
-
-* Layered Architecture
-* Model–View–Controller (MVC)
-* Service-Oriented Design
-* Event-Driven Architecture
-
-These patterns improve maintainability, scalability, and modularity.
-
----
-
-# 4. High-Level Architecture
+The target architecture is:
 
 ```text
-                    Users
-                      │
-                      ▼
-             Presentation Layer
-          (HTML, CSS, JavaScript)
-                      │
-                      ▼
-             Controller Layer
-      (Event & UI Controllers)
-                      │
-                      ▼
-             Service Layer
-   ┌────────┬────────┬────────┬────────┐
-   ▼        ▼        ▼        ▼
-Team   Score   Registration Firebase
-Service Service Service     Service
-                      │
-                      ▼
-             External Services
-      ┌──────────────┬──────────────┐
-      ▼              ▼              ▼
- Google Forms   Google Sheets   Firebase
+                 USERS
+                   |
+        -------------------------
+        |           |           |
+        v           v           v
+       TV         Laptop      Mobile
+        |           |           |
+        -------- React ----------
+                   |
+                   |
+                REST API
+                   |
+                   v
+              Spring Boot
+                   |
+                   |
+                  JPA
+                   |
+                   v
+              PostgreSQL
+```
+
+The React frontend is responsible for presentation and interaction.
+
+Spring Boot is responsible for application logic, security, validation and persistence operations.
+
+PostgreSQL is responsible for persistent data storage.
+
+---
+
+# 3. Frontend Responsibilities
+
+The frontend is responsible for:
+
+- Rendering the public scoreboard
+- Rendering the admin dashboard
+- Responsive layouts
+- User interaction
+- Form input
+- Displaying validation feedback
+- Calling backend APIs
+- Displaying backend data
+- Receiving future real-time score updates
+
+The frontend should not ultimately be responsible for permanently storing important event data.
+
+---
+
+# 4. Backend Responsibilities
+
+The backend will become the authoritative source for:
+
+- Teams
+- Team members
+- Scores
+- Score events
+- Event settings
+- Registration deadlines
+- Users
+- Roles
+- Authentication
+- Authorisation
+
+The backend will also enforce business rules.
+
+For example:
+
+```text
+Admin awards points
+        |
+        v
+Controller receives request
+        |
+        v
+Service validates operation
+        |
+        v
+Team score changes
+        |
+        +----> ScoreEvent created
+        |
+        v
+Database transaction committed
 ```
 
 ---
 
-# 5. Layered Architecture
+# 5. Backend Design Approach
 
-## Presentation Layer
+The backend will use object-oriented programming with a lightweight domain-oriented architecture.
 
-Responsible for:
+The project will not initially implement full enterprise Domain-Driven Design.
 
-* User interface
-* User interaction
-* Rendering leaderboard
-* Displaying countdown
-* Displaying QR code
-* Displaying administrator interface
+Instead, useful DDD principles will be applied where they improve clarity.
 
-Technologies
+These include:
 
-* HTML5
-* CSS3
-* JavaScript
-
----
-
-## Controller Layer
-
-Acts as the communication layer between the frontend and backend services.
-
-Responsibilities include:
-
-* Receiving user requests
-* Calling services
-* Returning responses
-* Updating the interface
-
-Controllers include:
-
-* Admin Controller
-* Registration Controller
-* Scoreboard Controller
+- Clear domain models
+- Business logic separated from controllers
+- Explicit application services
+- Repository abstraction through Spring Data
+- DTOs at API boundaries
+- Domain-specific naming
+- Clearly defined responsibilities
 
 ---
 
-## Service Layer
+# 6. Planned Backend Packages
 
-Contains the business logic.
+The backend will use a structure similar to:
 
-Responsibilities include:
-
-* Score calculations
-* Registration processing
-* Team management
-* Firebase communication
-* Google Sheets communication
-* Countdown calculations
-
-Services include:
-
-* Team Service
-* Score Service
-* Registration Service
-* Firebase Service
-* Google Sheets Service
-* Countdown Service
-* QR Code Service
-
----
-
-## Data Layer
-
-Responsible for data persistence.
-
-Current implementation:
-
-* Firebase Realtime Database
-
-Future options:
-
-* PostgreSQL
-* MySQL
-* MongoDB
+```text
+com.friendslikethese.backend
+|
+|-- controller
+|
+|-- service
+|
+|-- repository
+|
+|-- domain
+|
+|-- dto
+|
+|-- security
+|
+|-- config
+|
+`-- exception
+```
 
 ---
 
-# 6. Design Principles
+# 7. Controller Layer
 
-The architecture follows several software engineering principles.
+Controllers form the HTTP boundary of the backend.
 
-## Single Responsibility Principle (SRP)
+Their responsibilities include:
 
-Each class performs one task.
+- Receiving HTTP requests
+- Reading request parameters
+- Reading request bodies
+- Invoking services
+- Returning HTTP responses
+
+Controllers should remain thin.
+
+Business logic should not be placed directly inside controllers.
 
 Example:
 
-* TeamService manages teams.
-* ScoreService manages scores.
-
----
-
-## Open/Closed Principle (OCP)
-
-Components should be open for extension but closed for modification.
-
-New functionality should be added through additional services rather than modifying existing ones.
-
----
-
-## Liskov Substitution Principle (LSP)
-
-Future implementations should allow service implementations to be replaced without affecting dependent components.
-
----
-
-## Interface Segregation Principle (ISP)
-
-Interfaces should expose only the operations required by their clients.
-
----
-
-## Dependency Inversion Principle (DIP)
-
-High-level components should depend on abstractions rather than concrete implementations.
-
----
-
-# 7. Major Components
-
-## Team Management Component
-
-Responsibilities
-
-* Create teams
-* Remove teams
-* Store members
-* Maintain scores
-
----
-
-## Leaderboard Component
-
-Responsibilities
-
-* Sort teams
-* Assign rankings
-* Highlight top three teams
-* Render scoreboard
-
----
-
-## Registration Component
-
-Responsibilities
-
-* Process registrations
-* Validate data
-* Import Google Forms responses
-* Synchronise with Firebase
-
----
-
-## Administration Component
-
-Responsibilities
-
-* Authentication
-* Team management
-* Score management
-* Competition reset
-
----
-
-## Synchronisation Component
-
-Responsibilities
-
-* Listen for Firebase updates
-* Import Google Sheets data
-* Refresh leaderboard
-
----
-
-# 8. Component Diagram
-
 ```text
-Presentation Layer
-        │
-        ▼
-Controllers
-        │
-        ▼
-Services
- ├── Team Service
- ├── Score Service
- ├── Registration Service
- ├── Countdown Service
- ├── Firebase Service
- └── Google Sheets Service
-        │
-        ▼
-Cloud Services
- ├── Firebase
- ├── Google Sheets
- └── Google Forms
+POST /api/teams
+       |
+       v
+TeamController
+       |
+       v
+TeamService
 ```
 
 ---
 
-# 9. Data Flow
+# 8. Service Layer
 
-## Registration Flow
+Services contain the application's main business operations.
+
+Examples include:
+
+- Creating a team
+- Updating a team
+- Deleting a team
+- Awarding points
+- Deducting points
+- Resetting scores
+- Recording score events
+
+The service layer provides separation between HTTP communication and domain operations.
+
+---
+
+# 9. Repository Layer
+
+Repositories provide database access.
+
+Spring Data JPA will be used to reduce repetitive persistence code.
+
+Example:
 
 ```text
-Participant
+TeamService
+     |
+     v
+TeamRepository
+     |
+     v
+PostgreSQL
+```
 
-↓
+Repositories should focus on persistence rather than UI or HTTP concerns.
 
-Google Form
+---
 
-↓
+# 10. Domain Layer
 
-Google Sheets
+The domain layer represents important application concepts.
 
-↓
+Initial domain concepts are expected to include:
 
-Registration Service
+```text
+Team
+ScoreEvent
+EventSettings
+User
+Role
+```
 
-↓
+These may evolve as backend development progresses.
 
-Team Object
+---
 
-↓
+# 11. DTO Layer
 
-Firebase
+DTO means Data Transfer Object.
 
-↓
+DTOs will be used to control information crossing the API boundary.
 
-Scoreboard
+This prevents the API from becoming unnecessarily coupled directly to database entities.
+
+Possible DTOs include:
+
+```text
+CreateTeamRequest
+UpdateTeamRequest
+TeamResponse
+ScoreAdjustmentRequest
+LoginRequest
+LoginResponse
 ```
 
 ---
 
-## Score Update Flow
+# 12. Team Domain
+
+A team currently contains:
 
 ```text
-Administrator
-
-↓
-
-Admin Controller
-
-↓
-
-Score Service
-
-↓
-
-Firebase
-
-↓
-
-Realtime Listener
-
-↓
-
-Updated Leaderboard
+id
+name
+members
+score
 ```
+
+The backend representation may evolve depending on how team members are persisted.
+
+Important rules include:
+
+- A team must have a valid name.
+- Team identifiers must be unique.
+- Scores must not become negative.
+- Team updates must preserve data integrity.
 
 ---
 
-# 10. Deployment Architecture
+# 13. Scoring Domain
+
+Scoring is one of the central business operations in Friends Like These.
+
+Current quick-score operations include:
 
 ```text
-Browser
-
-↓
-
-Netlify
-
-↓
-
-JavaScript Application
-
-↓
-
-Firebase Realtime Database
-
-↓
-
-Google Cloud Services
++5
++10
++15
++20
+-5
+Custom
 ```
 
----
+A score adjustment should eventually perform two operations within one backend transaction:
 
-# 11. Security Architecture
+```text
+Update Team score
 
-Current security includes:
+AND
 
-* Administrator password protection
-* Firebase access
-* HTTPS deployment
+Create ScoreEvent
+```
 
-Recommended future improvements:
-
-* Firebase Authentication
-* OAuth
-* Role-based authorisation
-* Password hashing
-* API key management
-* Environment variables
+This prevents the score and score history from becoming inconsistent.
 
 ---
 
-# 12. Scalability
+# 14. Score Events
 
-The architecture supports future expansion including:
+A score event records why a team's score changed.
 
-* Multiple competitions
-* Multiple administrators
-* Team statistics
-* User profiles
-* Tournament brackets
-* Historical events
-* AI-powered analytics
+The current frontend model contains:
 
----
+```text
+id
+teamId
+amount
+reason
+timestamp
+```
 
-# 13. Maintainability
-
-The architecture promotes maintainability through:
-
-* Modular services
-* Clear separation of concerns
-* Reusable components
-* Consistent naming conventions
-* Layered design
-
----
-
-# 14. Extensibility
-
-Future modules can be added with minimal impact on existing functionality.
+The persistent backend model may contain additional audit information later.
 
 Potential additions include:
 
-* Notification Service
-* Reporting Service
-* Analytics Service
-* Authentication Service
-* Export Service
-* Payment Service
+```text
+performedBy
+eventType
+previousScore
+newScore
+```
+
+These are future design considerations and are not yet implemented.
 
 ---
 
-# 15. Quality Attributes
+# 15. Event Settings
 
-The architecture was designed to achieve the following software quality attributes:
+Event settings currently include the registration deadline.
 
-## Performance
+Future settings may include:
 
-* Real-time updates
-* Efficient rendering
-* Lightweight frontend
+- Event name
+- Registration status
+- Event start time
+- Event end time
+- Registration URL
+- Scoring configuration
 
----
-
-## Reliability
-
-* Cloud persistence
-* Automatic synchronisation
+These should eventually be stored in the database rather than hard-coded into React.
 
 ---
 
-## Scalability
+# 16. Authentication
 
-* Modular services
-* Cloud infrastructure
+Spring Security will provide backend security.
 
----
+JWT authentication is planned.
 
-## Usability
+The expected flow is:
 
-* Responsive interface
-* Simple administration
-* Live feedback
+```text
+Admin
+  |
+  | username/password
+  v
+POST /api/auth/login
+  |
+  v
+Spring Security
+  |
+  v
+JWT issued
+  |
+  v
+React stores authentication state
+  |
+  v
+Protected API request
+```
 
----
-
-## Maintainability
-
-* Layered architecture
-* Modular design
-* Service separation
-
----
-
-# 16. Future Architecture
-
-Future versions could migrate to a full enterprise architecture using:
-
-* Spring Boot
-* REST APIs
-* PostgreSQL
-* Docker
-* Kubernetes
-* JWT Authentication
-* Redis
-* CI/CD pipelines
-* Microservices
+The exact token-storage strategy will be decided during security implementation.
 
 ---
 
-# 17. Summary
+# 17. Authorisation
 
-The Friends Like These architecture follows a modular layered design that separates presentation, business logic, and data management. By combining MVC principles, service-oriented design, and cloud-based infrastructure, the system provides a maintainable, scalable, and responsive platform for managing live competitions.
+Public users should be able to access public scoreboard information.
 
-The architecture is intentionally extensible, allowing additional features and services to be incorporated with minimal changes to existing components, making it suitable for future growth into a comprehensive event management platform.
+Administrative operations must be protected.
+
+For example:
+
+```text
+PUBLIC
+
+GET /api/teams
+GET public scoreboard data
+
+
+ADMIN
+
+POST /api/teams
+PUT /api/teams/{id}
+DELETE /api/teams/{id}
+POST score adjustments
+PUT event settings
+POST reset scores
+```
+
+The final permission model will be defined during backend security development.
+
+---
+
+# 18. Real-Time Communication
+
+A core requirement is synchronisation between devices.
+
+Example:
+
+```text
+Administrator phone
+       |
+       | +10
+       v
+Spring Boot
+       |
+       | update
+       v
+PostgreSQL
+       |
+       | live notification
+       v
+TV Scoreboard
+```
+
+The TV should not require a manual refresh after every score change.
+
+The exact real-time technology will be selected during that development phase.
+
+Possible approaches include:
+
+- Server-Sent Events
+- WebSockets
+
+The choice has not yet been finalised.
+
+---
+
+# 19. Responsive Architecture
+
+Responsive behaviour remains a frontend responsibility.
+
+The backend does not need separate APIs for TVs, tablets and phones simply because their screen sizes differ.
+
+All devices consume the same application data.
+
+For example:
+
+```text
+GET /api/teams
+```
+
+may be consumed by:
+
+```text
+TV
+Laptop
+Tablet
+Phone
+```
+
+React and CSS determine how that data is presented on each device.
+
+---
+
+# 20. Database
+
+PostgreSQL is planned as the relational database.
+
+Initial persistent concepts are expected to include:
+
+```text
+teams
+score_events
+event_settings
+users
+roles
+```
+
+The final schema will be designed alongside the backend domain rather than being created independently from application requirements.
+
+---
+
+# 21. Cloud Architecture
+
+Azure is the planned backend cloud platform.
+
+The intended direction is:
+
+```text
+React Frontend
+      |
+      v
+Azure-hosted Spring Boot API
+      |
+      v
+Azure Database for PostgreSQL
+```
+
+Azure App Service is currently the intended hosting option for Spring Boot.
+
+Azure Database for PostgreSQL Flexible Server is the intended managed database direction.
+
+These services will be configured later in the project.
+
+---
+
+# 22. Development Architecture
+
+During local development:
+
+```text
+React
+localhost:5173
+
+        |
+        v
+
+Spring Boot
+localhost:8080
+
+        |
+        v
+
+PostgreSQL
+localhost:5432
+```
+
+CORS configuration will allow the React development application to communicate with the Spring Boot API.
+
+---
+
+# 23. Error Handling
+
+The backend should eventually use centralised exception handling.
+
+Examples include:
+
+```text
+TeamNotFoundException
+DuplicateTeamException
+InvalidScoreAdjustmentException
+```
+
+These can be converted into appropriate HTTP responses by a global exception handler.
+
+This keeps error handling consistent across controllers.
+
+---
+
+# 24. Validation
+
+Backend validation must not depend entirely on React.
+
+Even when the frontend validates user input, the backend must independently validate incoming data.
+
+This protects the application when requests originate from:
+
+- React
+- API clients
+- automated tools
+- malformed requests
+
+Jakarta Validation will be used where appropriate.
+
+---
+
+# 25. Architectural Principle
+
+The central architectural rule for the rebuild is:
+
+```text
+The frontend displays state.
+
+The backend controls persistent application state.
+
+The database stores persistent state.
+```
+
+This separation allows Friends Like These to operate reliably across multiple devices during a live event.
