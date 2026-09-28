@@ -4,17 +4,20 @@ import "./ScoreHistory.css";
 
 interface ScoreHistoryProps {
     scoreEvents: scoreEvent[];
+    onResetActivity: () => Promise<void>;
 }
 
-function ScoreHistory({ scoreEvents }: ScoreHistoryProps) {
+function ScoreHistory({ scoreEvents, onResetActivity }: ScoreHistoryProps) {
     const [expanded, setExpanded] = useState(false);
+    const [confirmingReset, setConfirmingReset] = useState(false);
+    const [resetting, setResetting] = useState(false);
 
     return (
         <section
             className={
                 expanded
                     ? "score-history score-history--expanded"
-                    : "score-history"
+                    : scoreEvents.length === 0 ? "score-history score-history--empty" : "score-history"
             }
         >
             <header className="score-history__header">
@@ -23,7 +26,7 @@ function ScoreHistory({ scoreEvents }: ScoreHistoryProps) {
                         Activity
                     </span>
 
-                    <h2>Score History</h2>
+                    <h2>All Game Activity</h2>
                 </div>
 
                 <button
@@ -32,6 +35,9 @@ function ScoreHistory({ scoreEvents }: ScoreHistoryProps) {
                     onClick={() => setExpanded((current) => !current)}
                 >
                     {expanded ? "Collapse" : "Expand"}
+                </button>
+                <button type="button" className="score-history__reset" onClick={() => setConfirmingReset(true)} disabled={resetting}>
+                    Reset Current Round Activity
                 </button>
             </header>
 
@@ -49,7 +55,7 @@ function ScoreHistory({ scoreEvents }: ScoreHistoryProps) {
                             <div className="score-history__details">
                                 <h3>{event.teamName}</h3>
 
-                                <p>{event.reason}</p>
+                                <p>{event.reason}</p><p>{event.roundName ?? "Legacy / unassigned"}</p>
 
                                 <time dateTime={event.timestamp.toISOString()}>
                                     {event.timestamp.toLocaleString(
@@ -78,6 +84,7 @@ function ScoreHistory({ scoreEvents }: ScoreHistoryProps) {
                     ))}
                 </div>
             )}
+            {confirmingReset && <div className="score-history__confirm" role="alertdialog" aria-modal="true" aria-labelledby="reset-activity-title"><div><h3 id="reset-activity-title">Reset Current Round Activity?</h3><p>This clears activity and scoring for the active round only. Previous rounds remain unchanged.</p><footer><button type="button" onClick={() => setConfirmingReset(false)} disabled={resetting}>Cancel</button><button type="button" className="score-history__confirm-button" disabled={resetting} onClick={async()=>{setResetting(true);try{await onResetActivity();setConfirmingReset(false);}finally{setResetting(false);}}}>{resetting?"Resetting…":"Reset Round Activity"}</button></footer></div></div>}
         </section>
     );
 }

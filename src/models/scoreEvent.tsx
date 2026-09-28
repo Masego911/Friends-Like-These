@@ -5,4 +5,7 @@ export interface scoreEvent {
     amount: number;
     reason: string;
     timestamp: Date;
+    roundId?: string;
+    roundNumber?: number;
+    roundName?: string;
 }

@@ -1,8 +1,10 @@
 import type { Team } from "../../models/Team";
 import "./AdminTeamList.css";
+import type {RoundStanding} from "../../api/roundsApi";
 
 interface AdminTeamListProps {
     teams: Team[];
+    roundStandings: RoundStanding[];
     onRequestDeleteTeam: (team: Team) => void;
     onAddTeamRequest: () => void;
     onResetAllScoresRequest: () => void;
@@ -13,16 +15,18 @@ interface AdminTeamListProps {
         reason?: string,
     ) => void;
     onCustomScoreRequest: (team: Team) => void;
+    onSyncRegistrations: () => void;
 }
 
 function AdminTeamList({
-                           teams,
+                           teams,roundStandings,
                            onRequestDeleteTeam,
                            onAddTeamRequest,
                            onResetAllScoresRequest,
                            onEditTeamRequest,
                            onScoreChange,
                            onCustomScoreRequest,
+                           onSyncRegistrations,
                        }: AdminTeamListProps) {
     return (
         <section className="admin-team-list">
@@ -36,6 +40,7 @@ function AdminTeamList({
                 </div>
 
                 <div className="admin-team-list__header-actions">
+                    <button type="button" onClick={onSyncRegistrations}>Sync Registrations</button>
                     <button
                         className="admin-team-list__reset-button"
                         type="button"
@@ -68,9 +73,7 @@ function AdminTeamList({
                             </p>
                         </div>
 
-                        <div className="admin-team-list__score">
-                            {team.score} pts
-                        </div>
+                        <div className="admin-team-list__score"><small>Round Score</small><br/>{roundStandings.find(r=>r.teamId===team.id)?.roundScore??0} pts<br/><small>Overall Score</small><br/>{team.score} pts</div>
 
                         <div className="admin-team-list__score-controls">
                             <button

@@ -1,0 +1,1 @@
+import {request} from "./api";export interface PublicRegistration{registrationOpen:boolean;registrationDeadline:string|null;registrationFormUrl:string}export const getPublicRegistration=()=>request<PublicRegistration>("/api/public/registration");

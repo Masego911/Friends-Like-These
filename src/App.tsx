@@ -1,288 +1,803 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import "./styles/App.css";
+
 import type { Team } from "./models/Team";
-import type { eventSettings } from "./models/eventSettings";
+import type { scoreEvent } from "./models/scoreEvent";
+import type {
+    EventSettingsResponse,
+    EventSummary,
+} from "./api/eventsApi";
+import type {
+    GameRound,
+    RoundStanding,
+} from "./api/roundsApi";
+import type { RegistrationStatus } from "./api/registrationsApi";
+import type { AdminSession } from "./api/authApi";
+
 import AppHeader from "./components/layout/AppHeader";
 import Scoreboard from "./components/scoreboard/Scoreboard";
 import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminLogin from "./components/admin/AdminLogin";
 import DeleteTeamDialog from "./components/admin/DeleteTeamDialog";
 import UndoDeleteToast from "./components/admin/UndoDeleteToast";
-import type { scoreEvent } from "./models/scoreEvent.tsx";
+import PreviousGames from "./components/admin/PreviousGames";
 
-type AppView = "scoreboard" | "admin";
+import {
+    getTeams,
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    restoreTeam,
+    getLeaderboard,
+} from "./api/teamsApi";
 
-interface DeletedTeamState {
-    team: Team;
-    index: number;
-}
+import {
+    getCurrentEvent,
+    updateRegistrationDeadline,
+    updateTotalRounds,
+    getEvents,
+    createEvent,
+    openRegistration,
+    closeRegistration,
+    startGame,
+    completeGame,
+    archiveEvent,
+} from "./api/eventsApi";
 
-const UNDO_TIMEOUT_MS = 6000;
+import {
+    adjustScore,
+    getScoreHistory,
+    resetScores,
+    resetScoreActivity,
+    resetEntireGame,
+} from "./api/scoresApi";
 
-function App() {
-    const [view, setView] = useState<AppView>("scoreboard");
+import {
+    getCurrentRounds,
+    getCurrentRoundStandings,
+    startRound,
+    endRound,
+} from "./api/roundsApi";
 
-    const [eventSettings, setEventSettings] = useState<eventSettings>({
-        registrationDeadline: new Date("2026-09-30T20:00:00+02:00"),
-    });
+import {
+    getRegistrationStatus,
+    importRegistrations,
+} from "./api/registrationsApi";
 
-    const [scoreEvents, setScoreEvents] = useState<scoreEvent[]>([]);
+import {
+    getSession,
+    login,
+    logout,
+} from "./api/authApi";
 
-    const [teams, setTeams] = useState<Team[]>([
-        {
-            id: "team-001",
-            name: "The All-Stars",
-            members: [
-                "Mihle Ngcobo",
-                "Timothy Sherwood",
-                "Khaya Mpangele",
-                "Alex Mapfumo",
-                "Anashe Chipamaunga",
-                "Bulumko Tilayi",
-            ],
-            score: 120,
-        },
-        {
-            id: "team-002",
-            name: "Code Warriors",
-            members: [
-                "Aisha Khan",
-                "Thando Mbeki",
-                "Li Wei",
-            ],
-            score: 95,
-        },
-        {
-            id: "team-003",
-            name: "Debug Demons",
-            members: [
-                "Priya Naidoo",
-                "Lwazi Dlamini",
-                "Jordan Daniels",
-            ],
-            score: 80,
-        },
-        {
-            id: "team-004",
-            name: "Dream Team",
-            members: [
-                "Naledi Mokoena",
-                "Jade Williams",
-                "Sipho Ndlovu",
-            ],
-            score: 70,
-        },
-    ]);
+import { getPublicRegistration } from "./api/publicApi";
+
+type View = "scoreboard" | "admin" | "history";
+
+type LifecycleAction =
+    | "open"
+    | "close"
+    | "start"
+    | "complete";
+
+const ANONYMOUS_SESSION: AdminSession = {
+    authenticated: false,
+    username: null,
+    email: null,
+    displayName: null,
+    role: null,
+};
+
+const POLLING_INTERVAL_MS = 12_000;
+
+export default function App() {
+    /*
+     * ---------------------------------------------------------
+     * Navigation and authentication
+     * ---------------------------------------------------------
+     */
+
+    const [view, setView] =
+        useState<View>("scoreboard");
+
+    const [session, setSession] =
+        useState<AdminSession | null>(null);
+
+    const [checkingSession, setCheckingSession] =
+        useState(false);
+
+    /*
+     * ---------------------------------------------------------
+     * Public game state
+     * ---------------------------------------------------------
+     */
+
+    const [currentEvent, setCurrentEvent] =
+        useState<EventSettingsResponse | null>(null);
+
+    const [leaderboard, setLeaderboard] =
+        useState<Team[]>([]);
+
+    const [rounds, setRounds] =
+        useState<GameRound[]>([]);
+
+    const [roundStandings, setRoundStandings] =
+        useState<RoundStanding[]>([]);
+
+    const [registrationDeadline, setRegistrationDeadline] =
+        useState<Date>(new Date());
+
+    const [registrationFormUrl, setRegistrationFormUrl] =
+        useState("");
+
+    /*
+     * ---------------------------------------------------------
+     * Administrator state
+     * ---------------------------------------------------------
+     */
+
+    const [teams, setTeams] =
+        useState<Team[]>([]);
+
+    const [scoreEvents, setScoreEvents] =
+        useState<scoreEvent[]>([]);
+
+    const [registrationStatus, setRegistrationStatus] =
+        useState<RegistrationStatus | null>(null);
+
+    const [events, setEvents] =
+        useState<EventSummary[]>([]);
+
+    /*
+     * ---------------------------------------------------------
+     * UI state
+     * ---------------------------------------------------------
+     */
+
+    const [error, setError] =
+        useState("");
 
     const [teamPendingDeletion, setTeamPendingDeletion] =
         useState<Team | null>(null);
 
-    const [deletedTeam, setDeletedTeam] =
-        useState<DeletedTeamState | null>(null);
+    const [recentlyDeletedTeam, setRecentlyDeletedTeam] =
+        useState<Team | null>(null);
+
+    /*
+     * Prevent an older administrator refresh from overwriting
+     * a score mutation that completed after that refresh began.
+     */
+    const scoreMutationEpoch = useRef(0);
+
+    /*
+     * ---------------------------------------------------------
+     * Public data
+     * ---------------------------------------------------------
+     */
+
+    const loadPublicData = useCallback(async () => {
+        try {
+            const [
+                eventResult,
+                leaderboardResult,
+                roundsResult,
+                registrationResult,
+            ] = await Promise.all([
+                getCurrentEvent().catch(() => null),
+                getLeaderboard().catch(() => []),
+                getCurrentRounds().catch(() => []),
+                getPublicRegistration().catch(() => null),
+            ]);
+
+            setCurrentEvent(eventResult);
+            setLeaderboard(leaderboardResult as Team[]);
+            setRounds(roundsResult);
+
+            if (registrationResult) {
+                setRegistrationDeadline(
+                    new Date(
+                        registrationResult.registrationDeadline
+                        ?? Date.now()
+                    )
+                );
+
+                setRegistrationFormUrl(
+                    registrationResult.registrationFormUrl
+                );
+            }
+
+            const activeRound =
+                roundsResult.find(
+                    round => round.status === "IN_PROGRESS"
+                );
+
+            const latestCompletedRound =
+                [...roundsResult]
+                    .reverse()
+                    .find(
+                        round => round.status === "COMPLETED"
+                    );
+
+            const displayedRound =
+                activeRound ?? latestCompletedRound;
+
+            if (displayedRound) {
+                const standings =
+                    await getCurrentRoundStandings(
+                        displayedRound.roundNumber
+                    );
+
+                setRoundStandings(standings);
+            } else {
+                setRoundStandings([]);
+            }
+
+            setError("");
+        } catch {
+            setError(
+                "Public scoreboard is temporarily unavailable."
+            );
+        }
+    }, []);
+
+    /*
+     * ---------------------------------------------------------
+     * Administrator data
+     * ---------------------------------------------------------
+     */
+
+    const loadAdminData = useCallback(async () => {
+        const teamEpochAtRequestStart =
+            scoreMutationEpoch.current;
+
+        const [
+            teamsResult,
+            historyResult,
+            registrationResult,
+            eventsResult,
+        ] = await Promise.allSettled([
+            getTeams(),
+            getScoreHistory(),
+            getRegistrationStatus(),
+            getEvents(),
+        ]);
+
+        /*
+         * Do not allow an older polling request to overwrite
+         * a score mutation that occurred while it was running.
+         */
+        if (
+            teamsResult.status === "fulfilled"
+            && teamEpochAtRequestStart
+            === scoreMutationEpoch.current
+        ) {
+            setTeams(teamsResult.value);
+        }
+
+        if (historyResult.status === "fulfilled") {
+            setScoreEvents(historyResult.value);
+        }
+
+        if (registrationResult.status === "fulfilled") {
+            setRegistrationStatus(
+                registrationResult.value
+            );
+        }
+
+        if (eventsResult.status === "fulfilled") {
+            setEvents(eventsResult.value);
+        }
+
+        const primaryDataLoaded =
+            teamsResult.status === "fulfilled"
+            && registrationResult.status === "fulfilled";
+
+        if (primaryDataLoaded) {
+            setError("");
+        }
+
+        const hasFailure = [
+            teamsResult,
+            historyResult,
+            registrationResult,
+            eventsResult,
+        ].some(result => result.status === "rejected");
+
+        if (hasFailure) {
+            throw new Error(
+                "Some administrator data is temporarily unavailable."
+            );
+        }
+    }, []);
+
+    /*
+     * ---------------------------------------------------------
+     * Refresh
+     * ---------------------------------------------------------
+     */
+
+    const refreshApplication = useCallback(async () => {
+        await loadPublicData();
+
+        if (session?.authenticated) {
+            await loadAdminData();
+        }
+    }, [
+        session?.authenticated,
+        loadPublicData,
+        loadAdminData,
+    ]);
+
+    /*
+     * ---------------------------------------------------------
+     * Public polling
+     * ---------------------------------------------------------
+     */
 
     useEffect(() => {
-        if (!deletedTeam) {
+        void loadPublicData();
+
+        const timer = window.setInterval(
+            () => void loadPublicData(),
+            POLLING_INTERVAL_MS
+        );
+
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, [loadPublicData]);
+
+    /*
+     * ---------------------------------------------------------
+     * Session verification
+     * ---------------------------------------------------------
+     */
+
+    useEffect(() => {
+        if (view === "scoreboard") {
             return;
         }
 
-        const timeoutId = window.setTimeout(() => {
-            setDeletedTeam(null);
-        }, UNDO_TIMEOUT_MS);
+        let cancelled = false;
 
-        return () => window.clearTimeout(timeoutId);
-    }, [deletedTeam]);
+        const verifySession = async () => {
+            setCheckingSession(true);
 
-    function handleAddTeam(team: Team) {
-        setTeams((currentTeams) => [...currentTeams, team]);
-    }
+            try {
+                const currentSession =
+                    await getSession();
 
-    function handleRequestDeleteTeam(team: Team) {
-        setTeamPendingDeletion(team);
-    }
+                if (cancelled) {
+                    return;
+                }
 
-    function handleConfirmDeleteTeam() {
+                setSession(currentSession);
+
+                if (currentSession.authenticated) {
+                    try {
+                        await loadAdminData();
+                    } catch {
+                        if (!cancelled) {
+                            setError(
+                                "Administrator data is temporarily unavailable."
+                            );
+                        }
+                    }
+                }
+            } catch {
+                if (!cancelled) {
+                    setSession(ANONYMOUS_SESSION);
+                }
+            } finally {
+                if (!cancelled) {
+                    setCheckingSession(false);
+                }
+            }
+        };
+
+        void verifySession();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [view, loadAdminData]);
+
+    /*
+     * ---------------------------------------------------------
+     * Administrator polling
+     * ---------------------------------------------------------
+     */
+
+    useEffect(() => {
+        if (
+            view !== "admin"
+            || !session?.authenticated
+        ) {
+            return;
+        }
+
+        const timer = window.setInterval(() => {
+            void loadAdminData().catch(() => {
+                setError(
+                    "Administrator data is temporarily unavailable."
+                );
+            });
+        }, POLLING_INTERVAL_MS);
+
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, [
+        view,
+        session?.authenticated,
+        loadAdminData,
+    ]);
+
+    /*
+     * ---------------------------------------------------------
+     * Authentication
+     * ---------------------------------------------------------
+     */
+
+    const handleLogin = async (
+        username: string,
+        password: string
+    ) => {
+        const currentSession =
+            await login(username, password);
+
+        setSession(currentSession);
+
+        await loadAdminData();
+    };
+
+    const handleLogout = async () => {
+        await logout();
+
+        setSession(ANONYMOUS_SESSION);
+        setView("scoreboard");
+
+        setTeams([]);
+        setScoreEvents([]);
+        setRegistrationStatus(null);
+    };
+
+    /*
+     * ---------------------------------------------------------
+     * Generic mutation helper
+     * ---------------------------------------------------------
+     */
+
+    const mutateAndRefresh = async (
+        action: () => Promise<unknown>
+    ) => {
+        await action();
+        await refreshApplication();
+    };
+
+    /*
+     * ---------------------------------------------------------
+     * Scoring
+     * ---------------------------------------------------------
+     */
+
+    const handleScoreChange = async (
+        teamId: string,
+        amount: number,
+        reason = "Score adjustment"
+    ) => {
+        /*
+         * Mark the beginning of a score mutation so an older
+         * polling response cannot overwrite its result.
+         */
+        scoreMutationEpoch.current += 1;
+
+        try {
+            const updatedTeam =
+                await adjustScore(
+                    teamId,
+                    amount,
+                    reason
+                );
+
+            /*
+             * Increment again after the server mutation succeeds.
+             * Any request that began before this point is stale.
+             */
+            scoreMutationEpoch.current += 1;
+
+            setTeams(currentTeams =>
+                currentTeams.map(team =>
+                    team.id === updatedTeam.id
+                        ? updatedTeam
+                        : team
+                )
+            );
+
+            const updatedHistory =
+                await getScoreHistory();
+
+            setScoreEvents(updatedHistory);
+            setError("");
+        } catch (error) {
+            scoreMutationEpoch.current += 1;
+            throw error;
+        }
+    };
+
+    /*
+     * ---------------------------------------------------------
+     * Event lifecycle
+     * ---------------------------------------------------------
+     */
+
+    const handleLifecycleAction = async (
+        action: LifecycleAction
+    ) => {
+        const lifecycleActions: Record<
+            LifecycleAction,
+            () => Promise<unknown>
+        > = {
+            open: openRegistration,
+            close: closeRegistration,
+            start: startGame,
+            complete: completeGame,
+        };
+
+        await mutateAndRefresh(
+            lifecycleActions[action]
+        );
+    };
+
+    /*
+     * ---------------------------------------------------------
+     * Team deletion / restoration
+     * ---------------------------------------------------------
+     */
+
+    const handleConfirmDeleteTeam = async () => {
         if (!teamPendingDeletion) {
             return;
         }
 
-        const teamIndex = teams.findIndex(
-            (team) => team.id === teamPendingDeletion.id,
+        const teamToDelete = teamPendingDeletion;
+
+        await mutateAndRefresh(
+            () => deleteTeam(teamToDelete.id)
         );
 
-        if (teamIndex === -1) {
-            setTeamPendingDeletion(null);
-            return;
-        }
-
-        const teamToDelete = teams[teamIndex];
-
-        setTeams((currentTeams) =>
-            currentTeams.filter((team) => team.id !== teamToDelete.id),
-        );
-
-        setDeletedTeam({
-            team: teamToDelete,
-            index: teamIndex,
-        });
-
+        setRecentlyDeletedTeam(teamToDelete);
         setTeamPendingDeletion(null);
-    }
+    };
 
-    function handleUndoDeleteTeam() {
-        if (!deletedTeam) {
+    const handleRestoreTeam = async () => {
+        if (!recentlyDeletedTeam) {
             return;
         }
 
-        setTeams((currentTeams) => {
-            const teamAlreadyExists = currentTeams.some(
-                (team) => team.id === deletedTeam.team.id,
-            );
-
-            if (teamAlreadyExists) {
-                return currentTeams;
-            }
-
-            const restoredTeams = [...currentTeams];
-
-            const insertionIndex = Math.min(
-                deletedTeam.index,
-                restoredTeams.length,
-            );
-
-            restoredTeams.splice(
-                insertionIndex,
-                0,
-                deletedTeam.team,
-            );
-
-            return restoredTeams;
-        });
-
-        setDeletedTeam(null);
-    }
-
-    function handleDeadlineChange(deadline: Date) {
-        setEventSettings({
-            registrationDeadline: deadline,
-        });
-    }
-
-
-    function handleUpdateTeam(updatedTeam: Team) {
-        setTeams((currentTeams) =>
-            currentTeams.map((team) =>
-                team.id === updatedTeam.id ? updatedTeam : team,
-            ),
-        );
-    }
-
-    function handleResetAllScores() {
-        const resetEvents: scoreEvent[] = teams
-            .filter((team) => team.score > 0)
-            .map((team) => ({
-                id: crypto.randomUUID(),
-                teamId: team.id,
-                teamName: team.name,
-                amount: -team.score,
-                reason: "All scores reset",
-                timestamp: new Date(),
-            }));
-
-        setTeams((currentTeams) =>
-            currentTeams.map((team) => ({
-                ...team,
-                score: 0,
-            })),
+        await mutateAndRefresh(
+            () => restoreTeam(recentlyDeletedTeam.id)
         );
 
-        setScoreEvents((currentEvents) => [
-            ...resetEvents,
-            ...currentEvents,
-        ]);
-    }
+        setRecentlyDeletedTeam(null);
+    };
 
+    /*
+     * ---------------------------------------------------------
+     * Derived settings
+     * ---------------------------------------------------------
+     */
 
-    function handleScoreChange(
-        teamId: string,
-        amount: number,
-        reason = "Score adjustment",
-    ) {
-        const team = teams.find(
-            (currentTeam) => currentTeam.id === teamId,
-        );
+    const settings = {
+        registrationDeadline,
+        totalRounds: currentEvent?.totalRounds ?? 5,
+        currentRound: currentEvent?.currentRound ?? 1,
+    };
 
-        if (!team) {
-            return;
-        }
+    /*
+     * ---------------------------------------------------------
+     * View rendering
+     * ---------------------------------------------------------
+     */
 
-        const newScore = Math.max(0, team.score + amount);
-        const appliedAmount = newScore - team.score;
-
-        if (appliedAmount === 0) {
-            return;
-        }
-
-        setTeams((currentTeams) =>
-            currentTeams.map((currentTeam) =>
-                currentTeam.id === teamId
-                    ? {
-                        ...currentTeam,
-                        score: newScore,
+    const renderContent = () => {
+        if (view === "scoreboard") {
+            return (
+                <Scoreboard
+                    teams={leaderboard}
+                    registrationDeadline={
+                        registrationDeadline
                     }
-                    : currentTeam,
-            ),
+                    rounds={rounds}
+                    roundStandings={roundStandings}
+                    registrationFormUrl={
+                        registrationFormUrl
+                    }
+                />
+            );
+        }
+
+        if (checkingSession) {
+            return (
+                <p className="verification-screen">
+                    Checking administrator session…
+                </p>
+            );
+        }
+
+        if (!session?.authenticated) {
+            return (
+                <AdminLogin
+                    onLogin={handleLogin}
+                />
+            );
+        }
+
+        if (view === "history") {
+            return (
+                <PreviousGames
+                    events={events}
+                    onArchive={eventId =>
+                        mutateAndRefresh(
+                            () => archiveEvent(eventId)
+                        )
+                    }
+                />
+            );
+        }
+
+        return (
+            <AdminDashboard
+                settings={settings}
+                currentEvent={currentEvent}
+                rounds={rounds}
+                roundStandings={roundStandings}
+                teams={teams}
+                scoreEvents={scoreEvents}
+                registrationStatus={
+                    registrationStatus
+                }
+                events={events}
+                adminName={
+                    session.displayName
+                    ?? session.username
+                    ?? "Administrator"
+                }
+
+                onLogout={handleLogout}
+
+                onArchive={eventId =>
+                    mutateAndRefresh(
+                        () => archiveEvent(eventId)
+                    )
+                }
+
+                onCreateEvent={value =>
+                    mutateAndRefresh(
+                        () => createEvent(value)
+                    )
+                }
+
+                onLifecycleAction={
+                    handleLifecycleAction
+                }
+
+                onDeadlineChange={date =>
+                    mutateAndRefresh(
+                        () =>
+                            updateRegistrationDeadline(
+                                date.toISOString()
+                            )
+                    )
+                }
+
+                onRoundsChange={count =>
+                    mutateAndRefresh(
+                        () => updateTotalRounds(count)
+                    )
+                }
+
+                onStartRound={roundNumber =>
+                    mutateAndRefresh(
+                        () => startRound(roundNumber)
+                    )
+                }
+
+                onEndRound={roundNumber =>
+                    mutateAndRefresh(
+                        () => endRound(roundNumber)
+                    )
+                }
+
+                onResetScoreActivity={() =>
+                    mutateAndRefresh(
+                        resetScoreActivity
+                    )
+                }
+
+                onResetEntireGame={() =>
+                    mutateAndRefresh(
+                        resetEntireGame
+                    )
+                }
+
+                onRequestDeleteTeam={
+                    setTeamPendingDeletion
+                }
+
+                onAddTeam={team =>
+                    mutateAndRefresh(
+                        () =>
+                            createTeam(
+                                team.name,
+                                team.members
+                            )
+                    )
+                }
+
+                onUpdateTeam={(teamId, team) =>
+                    mutateAndRefresh(
+                        () =>
+                            updateTeam(
+                                teamId,
+                                team.name,
+                                team.members
+                            )
+                    )
+                }
+
+                onScoreChange={
+                    handleScoreChange
+                }
+
+                onResetAllScores={() =>
+                    mutateAndRefresh(resetScores)
+                }
+
+                onSyncRegistrations={() =>
+                    mutateAndRefresh(
+                        importRegistrations
+                    )
+                }
+            />
         );
-
-        // Stores a permanent record of this score change.
-        const scoreEvent: scoreEvent = {
-            id: crypto.randomUUID(),
-            teamId: team.id,
-            teamName: team.name,
-            amount: appliedAmount,
-            reason,
-            timestamp: new Date(),
-        };
-
-        setScoreEvents((currentEvents) => [
-            scoreEvent,
-            ...currentEvents,
-        ]);
-    }
+    };
 
     return (
         <>
-            <div inert={teamPendingDeletion ? true : undefined}>
-                <AppHeader
-                    currentView={view}
-                    onViewChange={setView}
-                />
+            <div
+                inert={
+                    teamPendingDeletion
+                        ? true
+                        : undefined
+                }
+            >
+                {view !== "admin" && (
+                    <AppHeader
+                        currentView={view}
+                        onViewChange={setView}
+                    />
+                )}
+
+                {error && (
+                    <p role="alert">
+                        {error}
+                    </p>
+                )}
 
                 <main>
-                    {view === "scoreboard" ? (
-                        <Scoreboard
-                            teams={teams}
-                            registrationDeadline={
-                                eventSettings.registrationDeadline
-                            }
-                        />
-                    ) : (
-                        <AdminDashboard
-                            settings={eventSettings}
-                            teams={teams}
-                            scoreEvents={scoreEvents}
-                            onDeadlineChange={handleDeadlineChange}
-                            onRequestDeleteTeam={handleRequestDeleteTeam}
-                            onAddTeam={handleAddTeam}
-                            onUpdateTeam={handleUpdateTeam}
-                            onScoreChange={handleScoreChange}
-                            onResetAllScores={handleResetAllScores}
-                        />
-                    )}
+                    {renderContent()}
                 </main>
 
-                {deletedTeam && (
+                {recentlyDeletedTeam && (
                     <UndoDeleteToast
-                        teamName={deletedTeam.team.name}
-                        onUndo={handleUndoDeleteTeam}
+                        teamName={
+                            recentlyDeletedTeam.name
+                        }
+                        onUndo={
+                            handleRestoreTeam
+                        }
                     />
                 )}
             </div>
@@ -290,12 +805,14 @@ function App() {
             {teamPendingDeletion && (
                 <DeleteTeamDialog
                     team={teamPendingDeletion}
-                    onCancel={() => setTeamPendingDeletion(null)}
-                    onConfirm={handleConfirmDeleteTeam}
+                    onCancel={() =>
+                        setTeamPendingDeletion(null)
+                    }
+                    onConfirm={
+                        handleConfirmDeleteTeam
+                    }
                 />
             )}
         </>
     );
 }
-
-export default App;

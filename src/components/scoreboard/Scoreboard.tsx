@@ -4,13 +4,19 @@ import "./Scoreboard.css"; // Loads scoreboard styles.
 import Countdown from "./Countdown"; // Displays the live registration countdown.
 import RegistrationQR from "./RegistrationQR";
 import { eventConfig } from "../../config/eventConfig";
+import type {GameRound,RoundStanding} from "../../api/roundsApi";
 
 interface ScoreboardProps {
     teams: Team[];
     registrationDeadline: Date;
+    rounds: GameRound[];
+    roundStandings: RoundStanding[];
+    registrationFormUrl?: string;
 }
 
-function Scoreboard({ teams, registrationDeadline }: ScoreboardProps) {
+function Scoreboard({ teams, registrationDeadline,rounds,roundStandings,registrationFormUrl }: ScoreboardProps) {
+    const active=rounds.find(r=>r.status==="IN_PROGRESS"),last=[...rounds].reverse().find(r=>r.status==="COMPLETED");
+    const roundTeams:Team[]=roundStandings.map(r=>({id:r.teamId,name:r.teamName,members:[],score:r.roundScore}));
     return (
         <section className="scoreboard">
 
@@ -44,12 +50,13 @@ function Scoreboard({ teams, registrationDeadline }: ScoreboardProps) {
                 </div>
 
                 <p className="scoreboard__message">
-                    Who knows their friends best?
+                    {active?`ROUND ${active.roundNumber} OF ${rounds.length}`:last?`ROUND ${last.roundNumber} COMPLETE`:"Who knows their friends best?"}
                 </p>
 
             </div>
 
             <div className="scoreboard__content">
+                {(active||last)&&<><h2>{active?"Current Round":"Round Results"}</h2><TeamList teams={roundTeams} /><h2>Overall Standings</h2></>}
                 <TeamList teams={teams} />
             </div>
 
@@ -57,7 +64,7 @@ function Scoreboard({ teams, registrationDeadline }: ScoreboardProps) {
 
 
                 <Countdown deadline={registrationDeadline} />
-                <RegistrationQR formUrl={eventConfig.registrationFormUrl} />
+                <RegistrationQR formUrl={registrationFormUrl||eventConfig.registrationFormUrl} />
             </div>
         </section>
     );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./AdminEventSettings.css";
 
 interface AdminEventSettingsProps {
@@ -17,6 +17,11 @@ function AdminEventSettings({
     const [time, setTime] = useState(
         registrationDeadline.toTimeString().slice(0, 5),
     );
+
+    useEffect(() => {
+        setDate(registrationDeadline.toISOString().slice(0, 10));
+        setTime(registrationDeadline.toTimeString().slice(0, 5));
+    }, [registrationDeadline]);
 
     function handleSave() {
         const newDeadline = new Date(`${date}T${time}:00`);

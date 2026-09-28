@@ -111,4 +111,4 @@
     background: #00aeb5;
     border: 1px solid #00aeb5;
     color: #ffffff;
-}
+}@media(max-width:480px){.edit-team-form{padding:1rem;border-radius:8px}.edit-team-form input{width:100%;min-width:0;font-size:16px}.edit-team-form__members-header{align-items:flex-start;flex-direction:column}.edit-team-form__members-header button{width:100%;min-height:44px}.edit-team-form__actions{display:grid;grid-template-columns:1fr 1fr}.edit-team-form__actions button{min-width:0;min-height:46px}}

@@ -11,6 +11,9 @@ function TeamList({ teams }: TeamListProps) {
 
     return (
         <section className="team-list">
+            {sortedTeams.length === 0 && (
+                <p className="team-list__empty">No teams have registered yet.</p>
+            )}
             {sortedTeams.map((team, index) => (
                 <TeamCard
                     key={team.id}

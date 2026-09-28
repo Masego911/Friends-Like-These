@@ -1,8 +1,8 @@
 import "./AppHeader.css";
 
 interface AppHeaderProps {
-    currentView: "scoreboard" | "admin";
-    onViewChange: (view: "scoreboard" | "admin") => void;
+    currentView: "scoreboard" | "admin" | "history";
+    onViewChange: (view: "scoreboard" | "admin" | "history") => void;
 }
 
 function AppHeader({
@@ -51,6 +51,7 @@ function AppHeader({
                 >
                     Scoreboard
                 </button>
+                <button className={currentView === "history" ? "app-header__admin-button app-header__button--active" : "app-header__admin-button"} type="button" onClick={() => onViewChange("history")}>Previous Games</button>
 
                 <button
                     className="app-header__admin-button"

@@ -55,4 +55,4 @@
 
 .admin-event-settings button:hover {
     background: #008f95;
-}
+}@media(max-width:680px){.admin-event-settings{max-width:none;padding:1rem;border-radius:8px}.admin-event-settings input{width:100%;min-width:0;max-width:100%;font-size:16px}.admin-event-settings button{width:100%;min-height:46px}}

@@ -1,238 +1,385 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
 import type { Team } from "../../models/Team";
 import type { eventSettings } from "../../models/eventSettings";
 import type { scoreEvent } from "../../models/scoreEvent";
-import AdminEventSettings from "./AdminEventSettings";
-import AdminTeamList from "./AdminTeamList";
+import type { RegistrationStatus } from "../../api/registrationsApi";
+import type {
+    EventSettingsResponse,
+    EventSummary,
+} from "../../api/eventsApi";
+import type {
+    GameRound,
+    RoundStanding,
+} from "../../api/roundsApi";
+
 import AddTeamForm from "./AddTeamForm";
 import EditTeamForm from "./EditTeamForm";
-import ScoreAdjustmentForm from "./ScoreAdjustmentForm";
-import ScoreHistory from "./ScoreHistory";
+import AdminEventSettings from "./AdminEventSettings";
+import GameRounds from "./GameRounds";
+import EventLifecyclePanel from "./EventLifecyclePanel";
+import RegistrationManagement from "./RegistrationManagement";
+import PreviousGames from "./PreviousGames";
+import AdminSidebar, { type AdminPage } from "./AdminSidebar";
+import GameContextHeader from "./GameContextHeader";
+import AdminOverviewPage from "./AdminOverviewPage";
+import LiveScoringPage from "./LiveScoringPage";
+import TeamsManagementPage from "./TeamsManagementPage";
+import DangerZone from "./DangerZone";
+
 import "./AdminDashboard.css";
 
-interface AdminDashboardProps {
+interface Props {
     settings: eventSettings;
     teams: Team[];
     scoreEvents: scoreEvent[];
-    onDeadlineChange: (deadline: Date) => void;
+    registrationStatus: RegistrationStatus | null;
+    rounds: GameRound[];
+    roundStandings?: RoundStanding[];
+    adminName: string;
+    currentEvent: EventSettingsResponse | null;
+    events: EventSummary[];
+
+    onDeadlineChange: (deadline: Date) => Promise<void>;
     onRequestDeleteTeam: (team: Team) => void;
-    onAddTeam: (team: Team) => void;
-    onUpdateTeam: (team: Team) => void;
-    onResetAllScores: () => void;
+    onAddTeam: (
+        team: Pick<Team, "name" | "members">
+    ) => Promise<void>;
+    onUpdateTeam: (
+        id: string,
+        team: Pick<Team, "name" | "members">
+    ) => Promise<void>;
+
+    onResetAllScores: () => Promise<void>;
     onScoreChange: (
-        teamId: string,
+        id: string,
         amount: number,
-        reason?: string,
-    ) => void;
+        reason?: string
+    ) => Promise<void>;
+
+    onSyncRegistrations: () => Promise<void>;
+    onRoundsChange: (numberOfRounds: number) => Promise<void>;
+    onResetScoreActivity: () => Promise<void>;
+    onResetEntireGame: () => Promise<void>;
+    onStartRound: (roundNumber: number) => Promise<void>;
+    onEndRound: (roundNumber: number) => Promise<void>;
+    onLogout: () => Promise<void>;
+
+    onCreateEvent: (value: {
+        name: string;
+        eventDate: string;
+        registrationDeadline: string;
+        totalRounds: number;
+    }) => Promise<void>;
+
+    onLifecycleAction: (
+        action: "open" | "close" | "start" | "complete"
+    ) => Promise<void>;
+
+    onArchive: (id: string) => Promise<void>;
 }
 
-function AdminDashboard({
-                            settings,
-                            teams,
-                            scoreEvents,
-                            onDeadlineChange,
-                            onRequestDeleteTeam,
-                            onAddTeam,
-                            onUpdateTeam,
-                            onResetAllScores,
-                            onScoreChange,
-                        }: AdminDashboardProps) {
-    const [showAddTeamForm, setShowAddTeamForm] = useState(false);
+const PAGE_TITLES: Record<AdminPage, string> = {
+    dashboard: "Dashboard",
+    scoring: "Live Scoring",
+    teams: "Teams",
+    registration: "Registration",
+    setup: "Game Setup",
+    history: "Previous Games",
+    settings: "Settings",
+};
 
-    const [teamBeingEdited, setTeamBeingEdited] =
-        useState<Team | null>(null);
+export default function AdminDashboard(props: Props) {
+    const [page, setPage] = useState<AdminPage>("dashboard");
+    const [navOpen, setNavOpen] = useState(false);
 
-    const [teamForScoreAdjustment, setTeamForScoreAdjustment] =
-        useState<Team | null>(null);
+    const [showAddTeam, setShowAddTeam] = useState(false);
+    const [editingTeam, setEditingTeam] = useState<Team | null>(null);
 
-    const [showResetConfirmation, setShowResetConfirmation] =
-        useState(false);
+    /*
+     * Navigation drawer behaviour.
+     *
+     * AdminDashboard owns this because the drawer belongs to the
+     * Admin Console shell rather than an individual page.
+     */
+    useEffect(() => {
+        if (!navOpen) {
+            document.body.classList.remove("admin-drawer-open");
+            return;
+        }
 
-    function closeAllForms() {
-        setShowAddTeamForm(false);
-        setTeamBeingEdited(null);
-        setTeamForScoreAdjustment(null);
-    }
+        document.body.classList.add("admin-drawer-open");
 
-    return (
-        <section className="admin-dashboard">
-            <header className="admin-dashboard__header">
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setNavOpen(false);
+            }
+        };
+
+        document.addEventListener("keydown", handleEscape);
+
+        return () => {
+            document.body.classList.remove("admin-drawer-open");
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, [navOpen]);
+
+    const navigateTo = (nextPage: AdminPage) => {
+        setPage(nextPage);
+        setNavOpen(false);
+    };
+
+    const handleAddTeam = async (
+        team: Pick<Team, "name" | "members">
+    ) => {
+        await props.onAddTeam(team);
+        setShowAddTeam(false);
+    };
+
+    const handleUpdateTeam = async (
+        team: Pick<Team, "name" | "members">
+    ) => {
+        if (!editingTeam) {
+            return;
+        }
+
+        await props.onUpdateTeam(editingTeam.id, team);
+        setEditingTeam(null);
+    };
+
+    const renderDashboard = (): ReactNode => (
+        <AdminOverviewPage
+            event={props.currentEvent}
+            teams={props.teams}
+            registration={props.registrationStatus}
+            rounds={props.rounds}
+            activity={props.scoreEvents}
+            onNavigate={navigateTo}
+        />
+    );
+
+    const renderLiveScoring = (): ReactNode => (
+        <LiveScoringPage
+            event={props.currentEvent}
+            rounds={props.rounds}
+            teams={props.teams}
+            activity={props.scoreEvents}
+            onScoreChange={props.onScoreChange}
+            onResetActivity={props.onResetScoreActivity}
+            onStartRound={props.onStartRound}
+            onEndRound={props.onEndRound}
+        />
+    );
+
+    const renderTeams = (): ReactNode => (
+        <TeamsManagementPage
+            teams={props.teams}
+            onAdd={() => setShowAddTeam(true)}
+            onEdit={setEditingTeam}
+            onDelete={props.onRequestDeleteTeam}
+        />
+    );
+
+    const renderRegistration = (): ReactNode => (
+        <div className="admin-page">
+            <RegistrationManagement
+                status={props.registrationStatus}
+                onSyncNow={props.onSyncRegistrations}
+            />
+        </div>
+    );
+
+    const renderGameSetup = (): ReactNode => (
+        <div className="admin-page">
+            <div className="admin-page__heading">
                 <div>
-                    <span className="admin-dashboard__eyebrow">
-                        Friends Like These
-                    </span>
-
-                    <h1>Admin Dashboard</h1>
-
+                    <span>Current game</span>
+                    <h2>Game Setup</h2>
                     <p>
-                        Manage event settings, teams and live scores.
+                        Configure the current event using the existing
+                        game settings.
                     </p>
                 </div>
-            </header>
-
-            <div className="admin-dashboard__overview">
-                <AdminEventSettings
-                    registrationDeadline={
-                        settings.registrationDeadline
-                    }
-                    onDeadlineChange={onDeadlineChange}
-                />
-
-                <ScoreHistory
-                    scoreEvents={scoreEvents}
-                />
             </div>
 
-            <div className="admin-dashboard__teams">
-                <AdminTeamList
-                    teams={teams}
-                    onRequestDeleteTeam={onRequestDeleteTeam}
-                    onAddTeamRequest={() => {
-                        closeAllForms();
-                        setShowAddTeamForm(true);
-                    }}
-                    onResetAllScoresRequest={() => {
-                        closeAllForms();
-                        setShowResetConfirmation(true);
-                    }}
-                    onEditTeamRequest={(team) => {
-                        closeAllForms();
-                        setTeamBeingEdited(team);
-                    }}
-                    onScoreChange={onScoreChange}
-                    onCustomScoreRequest={(team) => {
-                        closeAllForms();
-                        setTeamForScoreAdjustment(team);
-                    }}
-                />
+            <EventLifecyclePanel
+                event={props.currentEvent}
+                onCreate={props.onCreateEvent}
+                onAction={props.onLifecycleAction}
+            />
+
+            {props.currentEvent && (
+                <div className="setup-grid">
+                    <AdminEventSettings
+                        registrationDeadline={
+                            props.settings.registrationDeadline
+                        }
+                        onDeadlineChange={props.onDeadlineChange}
+                    />
+
+                <GameRounds
+                    key={props.settings.totalRounds}
+                    totalRounds={props.settings.totalRounds}
+                        currentRound={props.settings.currentRound}
+                        rounds={props.rounds}
+                        eventStatus={props.currentEvent.status}
+                        onSave={props.onRoundsChange}
+                        onStart={props.onStartRound}
+                        onEnd={props.onEndRound}
+                    />
+                </div>
+            )}
+        </div>
+    );
+
+    const renderHistory = (): ReactNode => (
+        <div className="admin-page">
+            <PreviousGames
+                events={props.events}
+                onArchive={props.onArchive}
+            />
+        </div>
+    );
+
+    const renderSettings = (): ReactNode => (
+        <div className="admin-page">
+            <div className="admin-page__heading">
+                <div>
+                    <span>Administration</span>
+                    <h2>Settings</h2>
+                    <p>
+                        Your authenticated session and game safety
+                        controls.
+                    </p>
+                </div>
             </div>
 
-            {showAddTeamForm && (
-                <div
-                    className="admin-dashboard__modal-backdrop"
-                    role="presentation"
-                >
+            <section className="settings-card">
+                <h3>Administrator session</h3>
+
+                <dl>
+                    <div>
+                        <dt>Signed in as</dt>
+                        <dd>{props.adminName}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Data source</dt>
+                        <dd>Friends Like These API and SQL Server</dd>
+                    </div>
+
+                    <div>
+                        <dt>Refresh</dt>
+                        <dd>
+                            Administrator data refreshes every 12 seconds
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+
+            <DangerZone
+                teamCount={props.teams.length}
+                live={props.currentEvent?.status === "LIVE"}
+                onResetScores={props.onResetAllScores}
+                onResetEntireGame={props.onResetEntireGame}
+            />
+        </div>
+    );
+
+    /*
+     * Page selection is kept in one place.
+     *
+     * AdminDashboard decides WHICH page is active while each page
+     * component remains responsible for its own presentation.
+     */
+    const renderPage = (): ReactNode => {
+        switch (page) {
+            case "dashboard":
+                return renderDashboard();
+
+            case "scoring":
+                return renderLiveScoring();
+
+            case "teams":
+                return renderTeams();
+
+            case "registration":
+                return renderRegistration();
+
+            case "setup":
+                return renderGameSetup();
+
+            case "history":
+                return renderHistory();
+
+            case "settings":
+                return renderSettings();
+
+            default:
+                return renderDashboard();
+        }
+    };
+
+    return (
+        <section className="admin-console">
+            <AdminSidebar
+                activePage={page}
+                adminName={props.adminName}
+                open={navOpen}
+                onNavigate={navigateTo}
+                onClose={() => setNavOpen(false)}
+                onLogout={props.onLogout}
+            />
+
+            <div
+                className="admin-console__main"
+                inert={navOpen ? true : undefined}
+            >
+                <GameContextHeader
+                    event={props.currentEvent}
+                    teamCount={props.teams.length}
+                    onMenu={() => setNavOpen(true)}
+                />
+
+                <main aria-label={PAGE_TITLES[page]}>
+                    {renderPage()}
+                </main>
+            </div>
+
+            {showAddTeam && (
+                <div className="admin-modal-backdrop">
                     <div
-                        className="admin-dashboard__modal"
+                        className="admin-modal"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Add Team"
                     >
                         <AddTeamForm
-                            existingTeams={teams}
-                            onAddTeam={(team) => {
-                                onAddTeam(team);
-                                setShowAddTeamForm(false);
-                            }}
-                            onCancel={() =>
-                                setShowAddTeamForm(false)
-                            }
+                            existingTeams={props.teams}
+                            onAddTeam={handleAddTeam}
+                            onCancel={() => setShowAddTeam(false)}
                         />
                     </div>
                 </div>
             )}
 
-            {teamBeingEdited && (
-                <div
-                    className="admin-dashboard__modal-backdrop"
-                    role="presentation"
-                >
+            {editingTeam && (
+                <div className="admin-modal-backdrop">
                     <div
-                        className="admin-dashboard__modal"
+                        className="admin-modal"
                         role="dialog"
                         aria-modal="true"
-                        aria-label={`Edit ${teamBeingEdited.name}`}
+                        aria-label={`Edit ${editingTeam.name}`}
                     >
                         <EditTeamForm
-                            team={teamBeingEdited}
-                            existingTeams={teams}
-                            onSave={(updatedTeam) => {
-                                onUpdateTeam(updatedTeam);
-                                setTeamBeingEdited(null);
-                            }}
-                            onCancel={() =>
-                                setTeamBeingEdited(null)
-                            }
+                            team={editingTeam}
+                            existingTeams={props.teams}
+                            onSave={handleUpdateTeam}
+                            onCancel={() => setEditingTeam(null)}
                         />
-                    </div>
-                </div>
-            )}
-
-            {teamForScoreAdjustment && (
-                <div
-                    className="admin-dashboard__modal-backdrop"
-                    role="presentation"
-                >
-                    <div
-                        className="admin-dashboard__modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={`Adjust score for ${teamForScoreAdjustment.name}`}
-                    >
-                        <ScoreAdjustmentForm
-                            team={teamForScoreAdjustment}
-                            onSubmit={(teamId, amount, reason) => {
-                                onScoreChange(
-                                    teamId,
-                                    amount,
-                                    reason,
-                                );
-
-                                setTeamForScoreAdjustment(null);
-                            }}
-                            onCancel={() =>
-                                setTeamForScoreAdjustment(null)
-                            }
-                        />
-                    </div>
-                </div>
-            )}
-
-            {showResetConfirmation && (
-                <div
-                    className="admin-dashboard__modal-backdrop"
-                    role="presentation"
-                >
-                    <div
-                        className="admin-dashboard__reset-dialog"
-                        role="alertdialog"
-                        aria-modal="true"
-                        aria-labelledby="reset-scores-title"
-                    >
-                        <h2 id="reset-scores-title">
-                            Reset All Scores?
-                        </h2>
-
-                        <p>
-                            This will set every team's score back to zero.
-                        </p>
-
-                        <div className="admin-dashboard__reset-actions">
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowResetConfirmation(false)
-                                }
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                className="admin-dashboard__confirm-reset"
-                                type="button"
-                                onClick={() => {
-                                    onResetAllScores();
-                                    setShowResetConfirmation(false);
-                                }}
-                            >
-                                Reset Scores
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
         </section>
     );
 }
-
-export default AdminDashboard;

@@ -5,7 +5,7 @@ import "./EditTeamForm.css";
 interface EditTeamFormProps {
     team: Team;
     existingTeams: Team[];
-    onSave: (team: Team) => void;
+    onSave: (team: Pick<Team, "name" | "members">) => void;
     onCancel: () => void;
 }
 
@@ -67,11 +67,7 @@ function EditTeamForm({
             return;
         }
 
-        const updatedTeam: Team = {
-            ...team,
-            name: cleanedName,
-            members: cleanedMembers,
-        };
+        const updatedTeam = { name: cleanedName, members: cleanedMembers };
 
         setError("");
         onSave(updatedTeam);

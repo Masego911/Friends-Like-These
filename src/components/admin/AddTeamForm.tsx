@@ -4,7 +4,7 @@ import "./AddTeamForm.css";
 
 interface AddTeamFormProps {
     existingTeams: Team[];
-    onAddTeam: (team: Team) => void;
+    onAddTeam: (team: Pick<Team, "name" | "members">) => void;
     onCancel: () => void;
 }
 
@@ -64,12 +64,7 @@ function AddTeamForm({
             return;
         }
 
-        const newTeam: Team = {
-            id: crypto.randomUUID(),
-            name: cleanedName,
-            members: cleanedMembers,
-            score: 0,
-        };
+        const newTeam = { name: cleanedName, members: cleanedMembers };
 
         setError("");
         onAddTeam(newTeam);
