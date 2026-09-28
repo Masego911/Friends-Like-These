@@ -1,0 +1,208 @@
+import { useEffect, useRef, useState } from "react";
+import type { Team } from "../../models/Team";
+import TeamList from "../team/TeamList";
+import "./Scoreboard.css";
+import Countdown from "./Countdown";
+import RegistrationQR from "./RegistrationQR";
+import { eventConfig } from "../../config/eventConfig";
+import type { GameRound, RoundStanding } from "../../api/roundsApi";
+
+interface ScoreboardProps {
+    teams: Team[];
+    registrationDeadline: Date;
+    rounds: GameRound[];
+    roundStandings: RoundStanding[];
+    registrationFormUrl?: string;
+}
+
+type TransitionState =
+    | {
+    type: "START";
+    roundNumber: number;
+}
+    | {
+    type: "COMPLETE";
+    roundNumber: number;
+}
+    | null;
+
+function Scoreboard({
+                        teams,
+                        registrationDeadline,
+                        rounds,
+                        roundStandings,
+                        registrationFormUrl,
+                    }: ScoreboardProps) {
+    const activeRound = rounds.find(
+        (round) => round.status === "IN_PROGRESS"
+    );
+
+    const roundTeams: Team[] = roundStandings.map((standing) => ({
+        id: standing.teamId,
+        name: standing.teamName,
+        members: [],
+        score: standing.roundScore,
+    }));
+
+    const displayedTeams = activeRound ? roundTeams : teams;
+
+    const previousActiveRound = useRef<number | null | undefined>(
+        undefined
+    );
+
+    const [transition, setTransition] =
+        useState<TransitionState>(null);
+
+    useEffect(() => {
+        const currentRoundNumber =
+            activeRound?.roundNumber ?? null;
+
+        /*
+         * On the first load we only remember the current state.
+         * This prevents the scoreboard from playing a fake
+         * transition when somebody opens or refreshes the page.
+         */
+        if (previousActiveRound.current === undefined) {
+            previousActiveRound.current = currentRoundNumber;
+            return;
+        }
+
+        const previousRoundNumber =
+            previousActiveRound.current;
+
+        if (
+            previousRoundNumber === null &&
+            currentRoundNumber !== null
+        ) {
+            setTransition({
+                type: "START",
+                roundNumber: currentRoundNumber,
+            });
+        }
+
+        if (
+            previousRoundNumber !== null &&
+            currentRoundNumber === null
+        ) {
+            setTransition({
+                type: "COMPLETE",
+                roundNumber: previousRoundNumber,
+            });
+        }
+
+        previousActiveRound.current = currentRoundNumber;
+
+        const timer = window.setTimeout(() => {
+            setTransition(null);
+        }, 2200);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [activeRound?.roundNumber]);
+
+    return (
+        <section className="scoreboard">
+
+            {transition && (
+                <div
+                    className={`scoreboard-transition scoreboard-transition--${transition.type.toLowerCase()}`}
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="scoreboard-transition__colour-bar">
+                        <span />
+                        <span />
+                        <span />
+                        <span />
+                        <span />
+                    </div>
+
+                    <div className="scoreboard-transition__content">
+                        <span className="scoreboard-transition__eyebrow">
+                            Friends Like These
+                        </span>
+
+                        <strong className="scoreboard-transition__round">
+                            ROUND {transition.roundNumber}
+                        </strong>
+
+                        <span className="scoreboard-transition__status">
+                            {transition.type === "START"
+                                ? "ROUND IN PROGRESS"
+                                : "COMPLETE"}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            <div className="scoreboard__hero">
+
+                <div className="scoreboard__live">
+                    <span className="scoreboard__live-dot" />
+                    LIVE SCOREBOARD
+                </div>
+
+                <h1 className="scoreboard__title">
+                    Friends Like These
+                </h1>
+
+                <div
+                    className="scoreboard__colour-bar"
+                    aria-hidden="true"
+                >
+                    <span className="scoreboard__colour-block scoreboard__colour-block--orange" />
+                    <span className="scoreboard__colour-block scoreboard__colour-block--red" />
+                    <span className="scoreboard__colour-block scoreboard__colour-block--purple" />
+                    <span className="scoreboard__colour-block scoreboard__colour-block--blue" />
+                    <span className="scoreboard__colour-block scoreboard__colour-block--teal" />
+                </div>
+
+                <div className="scoreboard__campuskey">
+                    <span className="scoreboard__campuskey-name">
+                        CampusKey
+                    </span>
+
+                    <span className="scoreboard__campuskey-edition">
+                        EDITION
+                    </span>
+                </div>
+
+                <p className="scoreboard__message">
+                    {activeRound
+                        ? `ROUND ${activeRound.roundNumber} OF ${rounds.length}`
+                        : "OVERALL STANDINGS"}
+                </p>
+
+            </div>
+
+            <div className="scoreboard__content">
+
+                <h2>
+                    {activeRound
+                        ? `Round ${activeRound.roundNumber} Standings`
+                        : "Overall Standings"}
+                </h2>
+
+                <TeamList teams={displayedTeams} />
+
+            </div>
+
+            <div className="scoreboard__tools">
+
+                <Countdown deadline={registrationDeadline} />
+
+                <RegistrationQR
+                    formUrl={
+                        registrationFormUrl ||
+                        eventConfig.registrationFormUrl
+                    }
+                />
+
+            </div>
+
+        </section>
+    );
+}
+
+export default Scoreboard;

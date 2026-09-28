@@ -22,6 +22,9 @@ interface Props {
     onResetActivity: () => Promise<void>;
     onStartRound: (roundNumber: number) => Promise<void>;
     onEndRound: (roundNumber: number) => Promise<void>;
+    onLifecycleAction: (
+        action: "start" | "complete"
+    ) => Promise<void>;
 }
 
 function sortTeamsByScore(teams: Team[]): Team[] {
@@ -91,6 +94,7 @@ export default function LiveScoringPage({
                                             onResetActivity,
                                             onStartRound,
                                             onEndRound,
+                                            onLifecycleAction,
                                         }: Props) {
     const [pendingTeams, setPendingTeams] = useState<Set<string>>(
         () => new Set()
@@ -211,8 +215,11 @@ export default function LiveScoringPage({
                     currentRound={event.currentRound}
                     rounds={rounds}
                     eventStatus={event.status}
+                    event={event}
                     onStart={onStartRound}
                     onEnd={onEndRound}
+                    onStartGame={() => onLifecycleAction("start")}
+                    onCompleteGame={() => onLifecycleAction("complete")}
                 />
             )}
 

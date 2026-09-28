@@ -11,24 +11,11 @@ import MedalBadge from "./MedalBadge";
 interface TeamCardProps {
     team: Team;
     rank: number;
-    isNewLeader?: boolean;
-
-    /*
-     * Used only for the Overall Standings reveal.
-     *
-     * Example:
-     * 1st = 0ms
-     * 2nd = 180ms
-     * 3rd = 360ms
-     */
-    revealDelay?: number;
 }
 
 function TeamCard({
                       team,
                       rank,
-                      isNewLeader = false,
-                      revealDelay,
                   }: TeamCardProps) {
 
     /*
@@ -51,33 +38,27 @@ function TeamCard({
 
     /*
      * ---------------------------------------------------------
-     * Score animation
+     * Live score animation state
      * ---------------------------------------------------------
      */
 
     const previousScoreRef =
-        useRef<number>(
-            team.score
-        );
+        useRef<number>(team.score);
 
-    const [
-        displayScore,
-        setDisplayScore,
-    ] = useState<number>(
-        team.score
-    );
+    const [displayScore, setDisplayScore] =
+        useState<number>(team.score);
 
-    const [
-        scoreChange,
-        setScoreChange,
-    ] = useState<number | null>(
-        null
-    );
+    const [scoreChange, setScoreChange] =
+        useState<number | null>(null);
 
-    const [
-        scoreChanged,
-        setScoreChanged,
-    ] = useState(false);
+    const [scoreChanged, setScoreChanged] =
+        useState(false);
+
+    /*
+     * ---------------------------------------------------------
+     * Detect score changes
+     * ---------------------------------------------------------
+     */
 
     useEffect(() => {
 
@@ -91,61 +72,62 @@ function TeamCard({
             nextScore - previousScore;
 
         /*
-         * Normal polling frequently returns the same score.
-         *
-         * Do not animate when nothing actually changed.
+         * Polling will frequently return the same score.
+         * In that case there is nothing to animate.
          */
         if (difference === 0) {
 
-            setDisplayScore(
-                nextScore
-            );
+            setDisplayScore(nextScore);
 
             return;
         }
 
+        /*
+         * Store the new authoritative score so the next
+         * update can be compared against it.
+         */
         previousScoreRef.current =
             nextScore;
 
-        setScoreChange(
-            difference
-        );
-
-        setScoreChanged(
-            true
-        );
+        /*
+         * Show the +10 / -5 style indicator and activate
+         * the temporary card highlight.
+         */
+        setScoreChange(difference);
+        setScoreChanged(true);
 
         /*
          * -----------------------------------------------------
-         * Animated score count
+         * Animated score counter
          * -----------------------------------------------------
          */
 
-        const duration =
+        const animationDuration =
             450;
 
-        const startTime =
+        const animationStart =
             performance.now();
 
-        let animationFrame =
-            0;
+        let animationFrame = 0;
 
         const animateScore = (
             currentTime: number
         ) => {
 
             const elapsed =
-                currentTime -
-                startTime;
+                currentTime - animationStart;
 
             const progress =
                 Math.min(
-                    elapsed / duration,
+                    elapsed / animationDuration,
                     1
                 );
 
             /*
-             * Ease-out cubic.
+             * Ease-out curve.
+             *
+             * The score moves quickly at first and settles
+             * smoothly onto the final value.
              */
             const easedProgress =
                 1 -
@@ -154,7 +136,7 @@ function TeamCard({
                     3
                 );
 
-            const animatedValue =
+            const animatedScore =
                 Math.round(
                     previousScore +
                     (
@@ -165,12 +147,10 @@ function TeamCard({
                 );
 
             setDisplayScore(
-                animatedValue
+                animatedScore
             );
 
-            if (
-                progress < 1
-            ) {
+            if (progress < 1) {
 
                 animationFrame =
                     requestAnimationFrame(
@@ -180,6 +160,9 @@ function TeamCard({
                 return;
             }
 
+            /*
+             * Always finish on the exact server value.
+             */
             setDisplayScore(
                 nextScore
             );
@@ -191,25 +174,24 @@ function TeamCard({
             );
 
         /*
-         * Remove +10 / -5 and the score glow after the
-         * score impact animation has completed.
+         * Remove the temporary +points indicator and
+         * card highlight after the feedback animation.
          */
         const feedbackTimer =
             window.setTimeout(
                 () => {
 
-                    setScoreChange(
-                        null
-                    );
-
-                    setScoreChanged(
-                        false
-                    );
+                    setScoreChange(null);
+                    setScoreChanged(false);
 
                 },
                 900
             );
 
+        /*
+         * Clean up if another score arrives while the
+         * animation is still running or the card unmounts.
+         */
         return () => {
 
             cancelAnimationFrame(
@@ -225,15 +207,6 @@ function TeamCard({
 
     /*
      * ---------------------------------------------------------
-     * Overall Standings reveal
-     * ---------------------------------------------------------
-     */
-
-    const shouldReveal =
-        revealDelay !== undefined;
-
-    /*
-     * ---------------------------------------------------------
      * Render
      * ---------------------------------------------------------
      */
@@ -241,74 +214,14 @@ function TeamCard({
     return (
         <article
             className={
-                [
-                    "team-card",
-
-                    rankClass,
-
+                `team-card ${rankClass} ${
                     scoreChanged
                         ? "team-card--score-changed"
-                        : "",
-
-                    isNewLeader
-                        ? "team-card--new-leader"
-                        : "",
-
-                    shouldReveal
-                        ? "team-card--reveal"
-                        : "",
-                ]
-                    .filter(Boolean)
-                    .join(" ")
+                        : ""
+                }`
             }
             data-team-id={team.id}
-            style={
-                shouldReveal
-                    ? {
-                        animationDelay:
-                            `${revealDelay}ms`,
-                    }
-                    : undefined
-            }
         >
-
-            {/* ===============================================
-                NEW LEADER
-                =============================================== */}
-
-            {isNewLeader && (
-
-                <div
-                    className="team-card__leader-banner"
-                    role="status"
-                    aria-live="polite"
-                >
-
-                    <span
-                        className="team-card__leader-star"
-                        aria-hidden="true"
-                    >
-                        ★
-                    </span>
-
-                    <span>
-                        NEW LEADER
-                    </span>
-
-                    <span
-                        className="team-card__leader-star"
-                        aria-hidden="true"
-                    >
-                        ★
-                    </span>
-
-                </div>
-
-            )}
-
-            {/* ===============================================
-                RANK
-                =============================================== */}
 
             <div className="team-card__rank">
 
@@ -328,29 +241,17 @@ function TeamCard({
 
             </div>
 
-            {/* ===============================================
-                TEAM
-                =============================================== */}
-
             <div className="team-card__content">
 
                 <h2 className="team-card__name">
                     {team.name}
                 </h2>
 
-                {team.members.length > 0 && (
-
-                    <p className="team-card__members">
-                        {team.members.join(" • ")}
-                    </p>
-
-                )}
+                <p className="team-card__members">
+                    {team.members.join(" • ")}
+                </p>
 
             </div>
-
-            {/* ===============================================
-                SCORE
-                =============================================== */}
 
             <div className="team-card__score">
 
@@ -358,13 +259,11 @@ function TeamCard({
 
                     <span
                         className={
-                            [
-                                "team-card__score-change",
-
+                            `team-card__score-change ${
                                 scoreChange > 0
                                     ? "team-card__score-change--positive"
-                                    : "team-card__score-change--negative",
-                            ].join(" ")
+                                    : "team-card__score-change--negative"
+                            }`
                         }
                         aria-hidden="true"
                     >

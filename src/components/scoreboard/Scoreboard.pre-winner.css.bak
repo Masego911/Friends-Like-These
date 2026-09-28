@@ -1,0 +1,650 @@
+.scoreboard {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.scoreboard__hero {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.scoreboard__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+
+    color: #ef4444;
+
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.scoreboard__live-dot {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #ef4444;
+
+    animation:
+            livePulse 1.6s ease-in-out infinite;
+}
+
+.scoreboard__title {
+    margin: 0;
+
+    color: #0b1f3a;
+
+    font-size: clamp(2.8rem, 6vw, 5.4rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.scoreboard__colour-bar {
+    display: flex;
+
+    width: min(520px, 72%);
+    height: 10px;
+
+    margin: 1rem auto 1.2rem;
+
+    overflow: hidden;
+}
+
+.scoreboard__colour-block {
+    flex: 1;
+}
+
+.scoreboard__colour-block--orange {
+    background: #f59e0b;
+}
+
+.scoreboard__colour-block--red {
+    background: #ef3340;
+}
+
+.scoreboard__colour-block--purple {
+    background: #4f46a5;
+}
+
+.scoreboard__colour-block--blue {
+    background: #2589c9;
+}
+
+.scoreboard__colour-block--teal {
+    background: #10a8a5;
+}
+
+.scoreboard__campuskey {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scoreboard__campuskey-name {
+    color: #52657a;
+
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    font-weight: 300;
+    letter-spacing: -0.04em;
+}
+
+.scoreboard__campuskey-edition {
+    margin-top: 0.15rem;
+
+    color: #52657a;
+
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.38em;
+}
+
+.scoreboard__message {
+    margin: 0.55rem 0 0;
+
+    color: #52657a;
+
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.scoreboard__content {
+    width: 100%;
+}
+
+.scoreboard__tools {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 0.8fr)
+        minmax(360px, 1.2fr);
+
+    gap: 1rem;
+
+    margin-top: 1.5rem;
+}
+
+
+/* =========================================================
+   LIVE INDICATOR
+   ========================================================= */
+
+@keyframes livePulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.35;
+        transform: scale(0.75);
+    }
+}
+
+
+/* =========================================================
+   FRIENDS LIKE THESE — ROUND TRANSITIONS
+   ========================================================= */
+
+.scoreboard-transition {
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background: #0b1f3a;
+
+    animation:
+            scoreboardTransitionEnter
+            0.45s
+            ease-out
+            both,
+
+            scoreboardTransitionExit
+            0.45s
+            ease-in
+            1.75s
+            both;
+}
+
+
+/* ---------------------------------------------------------
+   Subtle background energy
+   --------------------------------------------------------- */
+
+.scoreboard-transition::before {
+    content: "";
+
+    position: absolute;
+    inset: -30%;
+
+    background:
+            radial-gradient(
+                    circle at center,
+                    rgba(255, 255, 255, 0.08),
+                    transparent 55%
+            );
+
+    transform: scale(0.7);
+
+    animation:
+            scoreboardTransitionGlow
+            1.4s
+            ease-out
+            both;
+
+    pointer-events: none;
+}
+
+
+/* ---------------------------------------------------------
+   Transition content
+   --------------------------------------------------------- */
+
+.scoreboard-transition__content {
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 2rem;
+
+    text-align: center;
+
+    animation:
+            scoreboardTransitionContent
+            0.6s
+            ease-out
+            both;
+}
+
+.scoreboard-transition__eyebrow {
+    margin-bottom: 1rem;
+
+    color: rgba(255, 255, 255, 0.75);
+
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    font-weight: 800;
+
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+}
+
+.scoreboard-transition__round {
+    color: #ffffff;
+
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: 900;
+
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+
+    text-shadow:
+            0 12px 30px
+            rgba(0, 0, 0, 0.22);
+}
+
+.scoreboard-transition__status {
+    margin-top: 1.25rem;
+
+    color: #ffffff;
+
+    font-size: clamp(1rem, 3vw, 1.7rem);
+    font-weight: 800;
+
+    letter-spacing: 0.18em;
+}
+
+
+/* =========================================================
+   FRIENDS LIKE THESE COLOUR SWEEP
+   ========================================================= */
+
+.scoreboard-transition__colour-bar {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    display: grid;
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    height: 14px;
+
+    transform-origin: left center;
+
+    animation:
+            scoreboardColourBarRise
+            0.6s
+            ease-out
+            both;
+}
+
+.scoreboard-transition__colour-bar span {
+    transform-origin: bottom center;
+
+    animation:
+            scoreboardColourBlockPulse
+            0.65s
+            ease-out
+            both;
+}
+
+.scoreboard-transition__colour-bar
+span:nth-child(1) {
+    background: #f59e0b;
+}
+
+.scoreboard-transition__colour-bar
+span:nth-child(2) {
+    background: #ef3340;
+
+    animation-delay: 60ms;
+}
+
+.scoreboard-transition__colour-bar
+span:nth-child(3) {
+    background: #4f46a5;
+
+    animation-delay: 120ms;
+}
+
+.scoreboard-transition__colour-bar
+span:nth-child(4) {
+    background: #2589c9;
+
+    animation-delay: 180ms;
+}
+
+.scoreboard-transition__colour-bar
+span:nth-child(5) {
+    background: #10a8a5;
+
+    animation-delay: 240ms;
+}
+
+
+/* =========================================================
+   START ROUND
+   ========================================================= */
+
+.scoreboard-transition--start
+.scoreboard-transition__status {
+    color: #10a8a5;
+}
+
+.scoreboard-transition--start
+.scoreboard-transition__round {
+    animation:
+            scoreboardStartRound
+            0.65s
+            cubic-bezier(0.22, 1, 0.36, 1)
+            both;
+}
+
+
+/* =========================================================
+   ROUND COMPLETE
+   ========================================================= */
+
+.scoreboard-transition--complete {
+    background:
+            radial-gradient(
+                    circle at center,
+                    #15304f 0%,
+                    #0b1f3a 58%,
+                    #071629 100%
+            );
+
+    animation:
+            scoreboardTransitionEnter
+            0.45s
+            ease-out
+            both,
+
+            scoreboardCompleteExit
+            0.45s
+            ease-in
+            1.75s
+            both;
+}
+
+.scoreboard-transition--complete
+.scoreboard-transition__round {
+    animation:
+            scoreboardCompleteRound
+            0.7s
+            cubic-bezier(0.22, 1, 0.36, 1)
+            both;
+}
+
+.scoreboard-transition--complete
+.scoreboard-transition__status {
+    color: #f59e0b;
+
+    animation:
+            scoreboardCompleteStatus
+            0.65s
+            ease-out
+            0.2s
+            both;
+}
+
+
+/* =========================================================
+   TRANSITION ANIMATIONS
+   ========================================================= */
+
+@keyframes scoreboardTransitionEnter {
+
+    from {
+        opacity: 0;
+        transform: scale(1.04);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes scoreboardTransitionExit {
+
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+}
+
+@keyframes scoreboardCompleteExit {
+
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.025);
+    }
+}
+
+@keyframes scoreboardTransitionContent {
+
+    from {
+        opacity: 0;
+
+        transform:
+                translateY(28px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+                translateY(0);
+    }
+}
+
+@keyframes scoreboardTransitionGlow {
+
+    from {
+        opacity: 0;
+        transform: scale(0.65);
+    }
+
+    45% {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0.4;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes scoreboardColourBarRise {
+
+    from {
+        transform: scaleX(0);
+    }
+
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes scoreboardColourBlockPulse {
+
+    from {
+        opacity: 0;
+
+        transform:
+                scaleY(0);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+                scaleY(1);
+    }
+}
+
+@keyframes scoreboardStartRound {
+
+    from {
+        opacity: 0;
+
+        transform:
+                translateY(25px)
+                scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+                translateY(0)
+                scale(1);
+    }
+}
+
+@keyframes scoreboardCompleteRound {
+
+    0% {
+        opacity: 0;
+
+        transform:
+                scale(0.75);
+    }
+
+    65% {
+        opacity: 1;
+
+        transform:
+                scale(1.06);
+    }
+
+    100% {
+        opacity: 1;
+
+        transform:
+                scale(1);
+    }
+}
+
+@keyframes scoreboardCompleteStatus {
+
+    from {
+        opacity: 0;
+
+        transform:
+                translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+                translateY(0);
+    }
+}
+
+
+/* =========================================================
+   TABLET / MOBILE
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    .scoreboard__tools {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+
+    .scoreboard {
+        padding: 1rem;
+    }
+
+    .scoreboard__colour-bar {
+        width: 88%;
+        height: 8px;
+    }
+
+    .scoreboard__campuskey-edition {
+        font-size: 0.78rem;
+        letter-spacing: 0.28em;
+    }
+
+    .scoreboard__message {
+        font-size: 0.9rem;
+    }
+
+    .scoreboard-transition__content {
+        padding: 1rem;
+    }
+
+    .scoreboard-transition__round {
+        font-size:
+                clamp(
+                        3.6rem,
+                        19vw,
+                        6rem
+                );
+    }
+
+    .scoreboard-transition__status {
+        font-size: 0.95rem;
+        letter-spacing: 0.12em;
+    }
+
+    .scoreboard-transition__colour-bar {
+        height: 10px;
+    }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .scoreboard__live-dot,
+    .scoreboard-transition,
+    .scoreboard-transition::before,
+    .scoreboard-transition__content,
+    .scoreboard-transition__round,
+    .scoreboard-transition__status,
+    .scoreboard-transition__colour-bar,
+    .scoreboard-transition__colour-bar span {
+        animation-duration: 0.01ms;
+        animation-delay: 0ms;
+    }
+}

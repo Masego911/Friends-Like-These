@@ -168,6 +168,7 @@ export default function AdminDashboard(props: Props) {
             onResetActivity={props.onResetScoreActivity}
             onStartRound={props.onStartRound}
             onEndRound={props.onEndRound}
+            onLifecycleAction={props.onLifecycleAction}
         />
     );
 
@@ -204,6 +205,7 @@ export default function AdminDashboard(props: Props) {
 
             <EventLifecyclePanel
                 event={props.currentEvent}
+                rounds={props.rounds}
                 onCreate={props.onCreateEvent}
                 onAction={props.onLifecycleAction}
             />

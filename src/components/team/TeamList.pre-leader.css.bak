@@ -1,0 +1,61 @@
+.team-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    position: relative;
+}
+
+/*
+ * Keeps each leaderboard row stable while FLIP animations
+ * move teams between ranking positions.
+ */
+.team-list > .team-card {
+    width: 100%;
+    will-change: transform;
+}
+
+/*
+ * Empty leaderboard state.
+ */
+.team-list__empty {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 2rem;
+
+    box-sizing: border-box;
+
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+/*
+ * On smaller screens we reduce the space between rows,
+ * while keeping the leaderboard structure unchanged.
+ */
+@media (max-width: 600px) {
+    .team-list {
+        gap: 0.75rem;
+    }
+
+    .team-list__empty {
+        padding: 1.5rem 1rem;
+    }
+}
+
+/*
+ * Accessibility:
+ * users who request reduced motion should not see
+ * leaderboard movement animations.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .team-list > .team-card {
+        will-change: auto;
+    }
+}

@@ -34,6 +34,8 @@ import {
 
 import {
     getCurrentEvent,
+    getEvent,
+    getEventLeaderboard,
     updateRegistrationDeadline,
     updateTotalRounds,
     getEvents,
@@ -44,6 +46,7 @@ import {
     completeGame,
     archiveEvent,
 } from "./api/eventsApi";
+import { ApiError } from "./api/api";
 
 import {
     adjustScore,
@@ -56,6 +59,8 @@ import {
 import {
     getCurrentRounds,
     getCurrentRoundStandings,
+    getEventRounds,
+    getEventRoundStandings,
     startRound,
     endRound,
 } from "./api/roundsApi";
@@ -89,9 +94,11 @@ const ANONYMOUS_SESSION: AdminSession = {
     role: null,
 };
 
-const POLLING_INTERVAL_MS = 12_000;
+const PUBLIC_POLLING_INTERVAL_MS = 1_000;
+const ADMIN_POLLING_INTERVAL_MS = 12_000;
 
 export default function App() {
+
     /*
      * ---------------------------------------------------------
      * Navigation and authentication
@@ -114,6 +121,9 @@ export default function App() {
      */
 
     const [currentEvent, setCurrentEvent] =
+        useState<EventSettingsResponse | null>(null);
+
+    const [scoreboardEvent, setScoreboardEvent] =
         useState<EventSettingsResponse | null>(null);
 
     const [leaderboard, setLeaderboard] =
@@ -169,6 +179,8 @@ export default function App() {
      * a score mutation that completed after that refresh began.
      */
     const scoreMutationEpoch = useRef(0);
+    const displayedEventId = useRef<string | null>(null);
+    const publicLoadEpoch = useRef(0);
 
     /*
      * ---------------------------------------------------------
@@ -177,24 +189,79 @@ export default function App() {
      */
 
     const loadPublicData = useCallback(async () => {
-        try {
-            const [
-                eventResult,
-                leaderboardResult,
-                roundsResult,
-                registrationResult,
-            ] = await Promise.all([
-                getCurrentEvent().catch(() => null),
-                getLeaderboard().catch(() => []),
-                getCurrentRounds().catch(() => []),
-                getPublicRegistration().catch(() => null),
-            ]);
+        const loadEpoch = ++publicLoadEpoch.current;
 
-            setCurrentEvent(eventResult);
-            setLeaderboard(leaderboardResult as Team[]);
+        try {
+            let eventResult: EventSettingsResponse | null;
+            let leaderboardResult: Team[] = [];
+            let roundsResult: GameRound[] = [];
+            let historicalEvent = false;
+
+            try {
+                eventResult = await getCurrentEvent();
+            } catch (error) {
+                if (!(error instanceof ApiError) || error.status !== 404) {
+                    throw error;
+                }
+
+                const rememberedId = displayedEventId.current;
+
+                if (!rememberedId) {
+                    eventResult = null;
+                } else {
+                    const rememberedEvent = await getEvent(rememberedId);
+
+                    if (rememberedEvent.status !== "COMPLETED") {
+                        return;
+                    }
+
+                    eventResult = {
+                        ...rememberedEvent,
+                        current: false,
+                    };
+                    historicalEvent = true;
+                }
+            }
+
+            if (eventResult) {
+                displayedEventId.current = eventResult.id;
+
+                if (historicalEvent) {
+                    const [historicalLeaderboard, historicalRounds] =
+                        await Promise.all([
+                            getEventLeaderboard(eventResult.id),
+                            getEventRounds(eventResult.id),
+                        ]);
+
+                    leaderboardResult = historicalLeaderboard.map(row => ({
+                        id: row.teamId,
+                        name: row.teamName,
+                        members: [],
+                        score: row.score,
+                    }));
+                    roundsResult = historicalRounds;
+                } else {
+                    [leaderboardResult, roundsResult] = await Promise.all([
+                        getLeaderboard(),
+                        getCurrentRounds(),
+                    ]);
+                }
+            }
+
+            const registrationResult =
+                await getPublicRegistration().catch(() => null);
+
+            if (loadEpoch !== publicLoadEpoch.current) {
+                return;
+            }
+
+            setCurrentEvent(historicalEvent ? null : eventResult);
+            setScoreboardEvent(eventResult);
+            setLeaderboard(leaderboardResult);
             setRounds(roundsResult);
 
             if (registrationResult) {
+
                 setRegistrationDeadline(
                     new Date(
                         registrationResult.registrationDeadline
@@ -207,38 +274,65 @@ export default function App() {
                 );
             }
 
+            /*
+             * -------------------------------------------------
+             * Determine which round standings should be loaded
+             * -------------------------------------------------
+             */
+
             const activeRound =
                 roundsResult.find(
-                    round => round.status === "IN_PROGRESS"
+                    round =>
+                        round.status ===
+                        "IN_PROGRESS"
                 );
 
             const latestCompletedRound =
                 [...roundsResult]
                     .reverse()
                     .find(
-                        round => round.status === "COMPLETED"
+                        round =>
+                            round.status ===
+                            "COMPLETED"
                     );
 
             const displayedRound =
-                activeRound ?? latestCompletedRound;
+                activeRound ??
+                latestCompletedRound;
 
             if (displayedRound) {
-                const standings =
-                    await getCurrentRoundStandings(
+
+                const standings = historicalEvent && eventResult
+                    ? await getEventRoundStandings(
+                        eventResult.id,
+                        displayedRound.roundNumber
+                    )
+                    : await getCurrentRoundStandings(
                         displayedRound.roundNumber
                     );
 
-                setRoundStandings(standings);
+                if (loadEpoch !== publicLoadEpoch.current) {
+                    return;
+                }
+
+                setRoundStandings(
+                    standings
+                );
+
             } else {
+
                 setRoundStandings([]);
             }
 
             setError("");
+
         } catch {
+
             setError(
                 "Public scoreboard is temporarily unavailable."
             );
         }
+
     }, []);
 
     /*
@@ -247,69 +341,101 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
-    const loadAdminData = useCallback(async () => {
-        const teamEpochAtRequestStart =
-            scoreMutationEpoch.current;
+    const loadAdminData =
+        useCallback(async () => {
 
-        const [
-            teamsResult,
-            historyResult,
-            registrationResult,
-            eventsResult,
-        ] = await Promise.allSettled([
-            getTeams(),
-            getScoreHistory(),
-            getRegistrationStatus(),
-            getEvents(),
-        ]);
+            const teamEpochAtRequestStart =
+                scoreMutationEpoch.current;
 
-        /*
-         * Do not allow an older polling request to overwrite
-         * a score mutation that occurred while it was running.
-         */
-        if (
-            teamsResult.status === "fulfilled"
-            && teamEpochAtRequestStart
-            === scoreMutationEpoch.current
-        ) {
-            setTeams(teamsResult.value);
-        }
+            const [
+                teamsResult,
+                historyResult,
+                registrationResult,
+                eventsResult,
+            ] = await Promise.allSettled([
+                getTeams(),
+                getScoreHistory(),
+                getRegistrationStatus(),
+                getEvents(),
+            ]);
 
-        if (historyResult.status === "fulfilled") {
-            setScoreEvents(historyResult.value);
-        }
+            /*
+             * Do not allow an older polling request to overwrite
+             * a score mutation that occurred while it was running.
+             */
+            if (
+                teamsResult.status ===
+                "fulfilled"
+                &&
+                teamEpochAtRequestStart ===
+                scoreMutationEpoch.current
+            ) {
 
-        if (registrationResult.status === "fulfilled") {
-            setRegistrationStatus(
-                registrationResult.value
+                setTeams(
+                    teamsResult.value
+                );
+            }
+
+            if (
+                historyResult.status ===
+                "fulfilled"
+            ) {
+
+                setScoreEvents(
+                    historyResult.value
+                );
+            }
+
+            if (
+                registrationResult.status ===
+                "fulfilled"
+            ) {
+
+                setRegistrationStatus(
+                    registrationResult.value
+                );
+            }
+
+            if (
+                eventsResult.status ===
+                "fulfilled"
+            ) {
+
+                setEvents(
+                    eventsResult.value
+                );
+            }
+
+            const primaryDataLoaded =
+                teamsResult.status ===
+                "fulfilled"
+                &&
+                registrationResult.status ===
+                "fulfilled";
+
+            if (primaryDataLoaded) {
+                setError("");
+            }
+
+            const hasFailure = [
+                teamsResult,
+                historyResult,
+                registrationResult,
+                eventsResult,
+            ].some(
+                result =>
+                    result.status ===
+                    "rejected"
             );
-        }
 
-        if (eventsResult.status === "fulfilled") {
-            setEvents(eventsResult.value);
-        }
+            if (hasFailure) {
 
-        const primaryDataLoaded =
-            teamsResult.status === "fulfilled"
-            && registrationResult.status === "fulfilled";
+                throw new Error(
+                    "Some administrator data is temporarily unavailable."
+                );
+            }
 
-        if (primaryDataLoaded) {
-            setError("");
-        }
-
-        const hasFailure = [
-            teamsResult,
-            historyResult,
-            registrationResult,
-            eventsResult,
-        ].some(result => result.status === "rejected");
-
-        if (hasFailure) {
-            throw new Error(
-                "Some administrator data is temporarily unavailable."
-            );
-        }
-    }, []);
+        }, []);
 
     /*
      * ---------------------------------------------------------
@@ -317,17 +443,20 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
-    const refreshApplication = useCallback(async () => {
-        await loadPublicData();
+    const refreshApplication =
+        useCallback(async () => {
 
-        if (session?.authenticated) {
-            await loadAdminData();
-        }
-    }, [
-        session?.authenticated,
-        loadPublicData,
-        loadAdminData,
-    ]);
+            await loadPublicData();
+
+            if (session?.authenticated) {
+                await loadAdminData();
+            }
+
+        }, [
+            session?.authenticated,
+            loadPublicData,
+            loadAdminData,
+        ]);
 
     /*
      * ---------------------------------------------------------
@@ -336,16 +465,23 @@ export default function App() {
      */
 
     useEffect(() => {
+
         void loadPublicData();
 
-        const timer = window.setInterval(
-            () => void loadPublicData(),
-            POLLING_INTERVAL_MS
-        );
+        const timer =
+            window.setInterval(
+                () =>
+                    void loadPublicData(),
+                PUBLIC_POLLING_INTERVAL_MS
+            );
 
         return () => {
-            window.clearInterval(timer);
+
+            window.clearInterval(
+                timer
+            );
         };
+
     }, [loadPublicData]);
 
     /*
@@ -355,53 +491,84 @@ export default function App() {
      */
 
     useEffect(() => {
-        if (view === "scoreboard") {
+
+        if (
+            view ===
+            "scoreboard"
+        ) {
             return;
         }
 
         let cancelled = false;
 
-        const verifySession = async () => {
-            setCheckingSession(true);
+        const verifySession =
+            async () => {
 
-            try {
-                const currentSession =
-                    await getSession();
+                setCheckingSession(true);
 
-                if (cancelled) {
-                    return;
-                }
+                try {
 
-                setSession(currentSession);
+                    const currentSession =
+                        await getSession();
 
-                if (currentSession.authenticated) {
-                    try {
-                        await loadAdminData();
-                    } catch {
-                        if (!cancelled) {
-                            setError(
-                                "Administrator data is temporarily unavailable."
-                            );
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setSession(
+                        currentSession
+                    );
+
+                    if (
+                        currentSession.authenticated
+                    ) {
+
+                        try {
+
+                            await loadAdminData();
+
+                        } catch {
+
+                            if (!cancelled) {
+
+                                setError(
+                                    "Administrator data is temporarily unavailable."
+                                );
+                            }
                         }
                     }
+
+                } catch {
+
+                    if (!cancelled) {
+
+                        setSession(
+                            ANONYMOUS_SESSION
+                        );
+                    }
+
+                } finally {
+
+                    if (!cancelled) {
+
+                        setCheckingSession(
+                            false
+                        );
+                    }
                 }
-            } catch {
-                if (!cancelled) {
-                    setSession(ANONYMOUS_SESSION);
-                }
-            } finally {
-                if (!cancelled) {
-                    setCheckingSession(false);
-                }
-            }
-        };
+            };
 
         void verifySession();
 
         return () => {
+
             cancelled = true;
         };
-    }, [view, loadAdminData]);
+
+    }, [
+        view,
+        loadAdminData,
+    ]);
 
     /*
      * ---------------------------------------------------------
@@ -410,24 +577,38 @@ export default function App() {
      */
 
     useEffect(() => {
+
         if (
             view !== "admin"
-            || !session?.authenticated
+            ||
+            !session?.authenticated
         ) {
             return;
         }
 
-        const timer = window.setInterval(() => {
-            void loadAdminData().catch(() => {
-                setError(
-                    "Administrator data is temporarily unavailable."
-                );
-            });
-        }, POLLING_INTERVAL_MS);
+        const timer =
+            window.setInterval(
+                () => {
+
+                    void loadAdminData()
+                        .catch(() => {
+
+                            setError(
+                                "Administrator data is temporarily unavailable."
+                            );
+                        });
+
+                },
+                ADMIN_POLLING_INTERVAL_MS
+            );
 
         return () => {
-            window.clearInterval(timer);
+
+            window.clearInterval(
+                timer
+            );
         };
+
     }, [
         view,
         session?.authenticated,
@@ -440,28 +621,42 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
-    const handleLogin = async (
-        username: string,
-        password: string
-    ) => {
-        const currentSession =
-            await login(username, password);
+    const handleLogin =
+        async (
+            username: string,
+            password: string
+        ) => {
 
-        setSession(currentSession);
+            const currentSession =
+                await login(
+                    username,
+                    password
+                );
 
-        await loadAdminData();
-    };
+            setSession(
+                currentSession
+            );
 
-    const handleLogout = async () => {
-        await logout();
+            await loadAdminData();
+        };
 
-        setSession(ANONYMOUS_SESSION);
-        setView("scoreboard");
+    const handleLogout =
+        async () => {
 
-        setTeams([]);
-        setScoreEvents([]);
-        setRegistrationStatus(null);
-    };
+            await logout();
+
+            setSession(
+                ANONYMOUS_SESSION
+            );
+
+            setView(
+                "scoreboard"
+            );
+
+            setTeams([]);
+            setScoreEvents([]);
+            setRegistrationStatus(null);
+        };
 
     /*
      * ---------------------------------------------------------
@@ -469,12 +664,16 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
-    const mutateAndRefresh = async (
-        action: () => Promise<unknown>
-    ) => {
-        await action();
-        await refreshApplication();
-    };
+    const mutateAndRefresh =
+        async (
+            action: () =>
+                Promise<unknown>
+        ) => {
+
+            await action();
+
+            await refreshApplication();
+        };
 
     /*
      * ---------------------------------------------------------
@@ -482,49 +681,62 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
-    const handleScoreChange = async (
-        teamId: string,
-        amount: number,
-        reason = "Score adjustment"
-    ) => {
-        /*
-         * Mark the beginning of a score mutation so an older
-         * polling response cannot overwrite its result.
-         */
-        scoreMutationEpoch.current += 1;
-
-        try {
-            const updatedTeam =
-                await adjustScore(
-                    teamId,
-                    amount,
-                    reason
-                );
+    const handleScoreChange =
+        async (
+            teamId: string,
+            amount: number,
+            reason =
+            "Score adjustment"
+        ) => {
 
             /*
-             * Increment again after the server mutation succeeds.
-             * Any request that began before this point is stale.
+             * Mark the beginning of a score mutation so an older
+             * polling response cannot overwrite its result.
              */
             scoreMutationEpoch.current += 1;
 
-            setTeams(currentTeams =>
-                currentTeams.map(team =>
-                    team.id === updatedTeam.id
-                        ? updatedTeam
-                        : team
-                )
-            );
+            try {
 
-            const updatedHistory =
-                await getScoreHistory();
+                const updatedTeam =
+                    await adjustScore(
+                        teamId,
+                        amount,
+                        reason
+                    );
 
-            setScoreEvents(updatedHistory);
-            setError("");
-        } catch (error) {
-            scoreMutationEpoch.current += 1;
-            throw error;
-        }
-    };
+                /*
+                 * Increment again after the server mutation
+                 * succeeds.
+                 */
+                scoreMutationEpoch.current += 1;
+
+                setTeams(
+                    currentTeams =>
+                        currentTeams.map(
+                            team =>
+                                team.id ===
+                                updatedTeam.id
+                                    ? updatedTeam
+                                    : team
+                        )
+                );
+
+                const updatedHistory =
+                    await getScoreHistory();
+
+                setScoreEvents(
+                    updatedHistory
+                );
+
+                setError("");
+
+            } catch (error) {
+
+                scoreMutationEpoch.current += 1;
+
+                throw error;
+            }
+        };
 
     /*
      * ---------------------------------------------------------
@@ -535,14 +747,39 @@ export default function App() {
     const handleLifecycleAction = async (
         action: LifecycleAction
     ) => {
+
+        /*
+         * Complete Game is slightly different from the other
+         * lifecycle transitions.
+         *
+         * The backend correctly:
+         *
+         * LIVE -> COMPLETED
+         *
+         * and then clears is_current.
+         *
+         * Therefore GET /api/events/current no longer returns the
+         * event after completion.
+         *
+         * We preserve the successful completion response locally
+         * so the public scoreboard can see COMPLETED and launch
+         * the Grand Winner sequence.
+         */
         const lifecycleActions: Record<
             LifecycleAction,
             () => Promise<unknown>
         > = {
-            open: openRegistration,
-            close: closeRegistration,
-            start: startGame,
-            complete: completeGame,
+            open:
+            openRegistration,
+
+            close:
+            closeRegistration,
+
+            start:
+            startGame,
+
+            complete:
+            completeGame,
         };
 
         await mutateAndRefresh(
@@ -550,38 +787,61 @@ export default function App() {
         );
     };
 
+
     /*
      * ---------------------------------------------------------
      * Team deletion / restoration
      * ---------------------------------------------------------
      */
 
-    const handleConfirmDeleteTeam = async () => {
-        if (!teamPendingDeletion) {
-            return;
-        }
+    const handleConfirmDeleteTeam =
+        async () => {
 
-        const teamToDelete = teamPendingDeletion;
+            if (
+                !teamPendingDeletion
+            ) {
+                return;
+            }
 
-        await mutateAndRefresh(
-            () => deleteTeam(teamToDelete.id)
-        );
+            const teamToDelete =
+                teamPendingDeletion;
 
-        setRecentlyDeletedTeam(teamToDelete);
-        setTeamPendingDeletion(null);
-    };
+            await mutateAndRefresh(
+                () =>
+                    deleteTeam(
+                        teamToDelete.id
+                    )
+            );
 
-    const handleRestoreTeam = async () => {
-        if (!recentlyDeletedTeam) {
-            return;
-        }
+            setRecentlyDeletedTeam(
+                teamToDelete
+            );
 
-        await mutateAndRefresh(
-            () => restoreTeam(recentlyDeletedTeam.id)
-        );
+            setTeamPendingDeletion(
+                null
+            );
+        };
 
-        setRecentlyDeletedTeam(null);
-    };
+    const handleRestoreTeam =
+        async () => {
+
+            if (
+                !recentlyDeletedTeam
+            ) {
+                return;
+            }
+
+            await mutateAndRefresh(
+                () =>
+                    restoreTeam(
+                        recentlyDeletedTeam.id
+                    )
+            );
+
+            setRecentlyDeletedTeam(
+                null
+            );
+        };
 
     /*
      * ---------------------------------------------------------
@@ -590,9 +850,16 @@ export default function App() {
      */
 
     const settings = {
+
         registrationDeadline,
-        totalRounds: currentEvent?.totalRounds ?? 5,
-        currentRound: currentEvent?.currentRound ?? 1,
+
+        totalRounds:
+            currentEvent?.totalRounds ??
+            5,
+
+        currentRound:
+            currentEvent?.currentRound ??
+            1,
     };
 
     /*
@@ -602,170 +869,317 @@ export default function App() {
      */
 
     const renderContent = () => {
-        if (view === "scoreboard") {
+
+        /*
+         * -----------------------------------------------------
+         * PUBLIC SCOREBOARD
+         * -----------------------------------------------------
+         */
+
+        if (
+            view ===
+            "scoreboard"
+        ) {
+
             return (
+
                 <Scoreboard
-                    teams={leaderboard}
+                    teams={
+                        leaderboard
+                    }
                     registrationDeadline={
                         registrationDeadline
                     }
-                    rounds={rounds}
-                    roundStandings={roundStandings}
+                    rounds={
+                        rounds
+                    }
+                    roundStandings={
+                        roundStandings
+                    }
                     registrationFormUrl={
                         registrationFormUrl
                     }
+
+                    /*
+                     * The public scoreboard now receives the
+                     * real event lifecycle state.
+                     *
+                     * This will allow it to distinguish:
+                     *
+                     * End Round
+                     *      from
+                     * Complete Game.
+                     */
+                    eventStatus={
+                        scoreboardEvent?.status ??
+                        null
+                    }
                 />
+
             );
         }
 
+        /*
+         * -----------------------------------------------------
+         * SESSION CHECK
+         * -----------------------------------------------------
+         */
+
         if (checkingSession) {
+
             return (
+
                 <p className="verification-screen">
                     Checking administrator session…
                 </p>
+
             );
         }
 
-        if (!session?.authenticated) {
+        /*
+         * -----------------------------------------------------
+         * ADMIN LOGIN
+         * -----------------------------------------------------
+         */
+
+        if (
+            !session?.authenticated
+        ) {
+
             return (
+
                 <AdminLogin
-                    onLogin={handleLogin}
-                />
-            );
-        }
-
-        if (view === "history") {
-            return (
-                <PreviousGames
-                    events={events}
-                    onArchive={eventId =>
-                        mutateAndRefresh(
-                            () => archiveEvent(eventId)
-                        )
+                    onLogin={
+                        handleLogin
                     }
                 />
+
             );
         }
 
+        /*
+         * -----------------------------------------------------
+         * PREVIOUS GAMES
+         * -----------------------------------------------------
+         */
+
+        if (
+            view ===
+            "history"
+        ) {
+
+            return (
+
+                <PreviousGames
+                    events={
+                        events
+                    }
+                    onArchive={
+                        eventId =>
+                            mutateAndRefresh(
+                                () =>
+                                    archiveEvent(
+                                        eventId
+                                    )
+                            )
+                    }
+                />
+
+            );
+        }
+
+        /*
+         * -----------------------------------------------------
+         * ADMIN DASHBOARD
+         * -----------------------------------------------------
+         */
+
         return (
+
             <AdminDashboard
-                settings={settings}
-                currentEvent={currentEvent}
-                rounds={rounds}
-                roundStandings={roundStandings}
-                teams={teams}
-                scoreEvents={scoreEvents}
+                settings={
+                    settings
+                }
+
+                currentEvent={
+                    currentEvent
+                }
+
+                rounds={
+                    rounds
+                }
+
+                roundStandings={
+                    roundStandings
+                }
+
+                teams={
+                    teams
+                }
+
+                scoreEvents={
+                    scoreEvents
+                }
+
                 registrationStatus={
                     registrationStatus
                 }
-                events={events}
+
+                events={
+                    events
+                }
+
                 adminName={
                     session.displayName
-                    ?? session.username
-                    ?? "Administrator"
+                    ??
+                    session.username
+                    ??
+                    "Administrator"
                 }
 
-                onLogout={handleLogout}
-
-                onArchive={eventId =>
-                    mutateAndRefresh(
-                        () => archiveEvent(eventId)
-                    )
+                onLogout={
+                    handleLogout
                 }
 
-                onCreateEvent={value =>
-                    mutateAndRefresh(
-                        () => createEvent(value)
-                    )
+                onArchive={
+                    eventId =>
+                        mutateAndRefresh(
+                            () =>
+                                archiveEvent(
+                                    eventId
+                                )
+                        )
+                }
+
+                onCreateEvent={
+                    value =>
+                        mutateAndRefresh(
+                            () =>
+                                createEvent(
+                                    value
+                                )
+                        )
                 }
 
                 onLifecycleAction={
                     handleLifecycleAction
                 }
 
-                onDeadlineChange={date =>
-                    mutateAndRefresh(
-                        () =>
-                            updateRegistrationDeadline(
-                                date.toISOString()
-                            )
-                    )
+                onDeadlineChange={
+                    date =>
+                        mutateAndRefresh(
+                            () =>
+                                updateRegistrationDeadline(
+                                    date.toISOString()
+                                )
+                        )
                 }
 
-                onRoundsChange={count =>
-                    mutateAndRefresh(
-                        () => updateTotalRounds(count)
-                    )
+                onRoundsChange={
+                    count =>
+                        mutateAndRefresh(
+                            () =>
+                                updateTotalRounds(
+                                    count
+                                )
+                        )
                 }
 
-                onStartRound={roundNumber =>
-                    mutateAndRefresh(
-                        () => startRound(roundNumber)
-                    )
+                onStartRound={
+                    roundNumber =>
+                        mutateAndRefresh(
+                            () =>
+                                startRound(
+                                    roundNumber
+                                )
+                        )
                 }
 
-                onEndRound={roundNumber =>
-                    mutateAndRefresh(
-                        () => endRound(roundNumber)
-                    )
+                onEndRound={
+                    roundNumber =>
+                        mutateAndRefresh(
+                            () =>
+                                endRound(
+                                    roundNumber
+                                )
+                        )
                 }
 
-                onResetScoreActivity={() =>
-                    mutateAndRefresh(
-                        resetScoreActivity
-                    )
+                onResetScoreActivity={
+                    () =>
+                        mutateAndRefresh(
+                            resetScoreActivity
+                        )
                 }
 
-                onResetEntireGame={() =>
-                    mutateAndRefresh(
-                        resetEntireGame
-                    )
+                onResetEntireGame={
+                    () =>
+                        mutateAndRefresh(
+                            resetEntireGame
+                        )
                 }
 
                 onRequestDeleteTeam={
                     setTeamPendingDeletion
                 }
 
-                onAddTeam={team =>
-                    mutateAndRefresh(
-                        () =>
-                            createTeam(
-                                team.name,
-                                team.members
-                            )
-                    )
+                onAddTeam={
+                    team =>
+                        mutateAndRefresh(
+                            () =>
+                                createTeam(
+                                    team.name,
+                                    team.members
+                                )
+                        )
                 }
 
-                onUpdateTeam={(teamId, team) =>
-                    mutateAndRefresh(
-                        () =>
-                            updateTeam(
-                                teamId,
-                                team.name,
-                                team.members
-                            )
-                    )
+                onUpdateTeam={
+                    (
+                        teamId,
+                        team
+                    ) =>
+                        mutateAndRefresh(
+                            () =>
+                                updateTeam(
+                                    teamId,
+                                    team.name,
+                                    team.members
+                                )
+                        )
                 }
 
                 onScoreChange={
                     handleScoreChange
                 }
 
-                onResetAllScores={() =>
-                    mutateAndRefresh(resetScores)
+                onResetAllScores={
+                    () =>
+                        mutateAndRefresh(
+                            resetScores
+                        )
                 }
 
-                onSyncRegistrations={() =>
-                    mutateAndRefresh(
-                        importRegistrations
-                    )
+                onSyncRegistrations={
+                    () =>
+                        mutateAndRefresh(
+                            importRegistrations
+                        )
                 }
             />
+
         );
     };
 
+    /*
+     * ---------------------------------------------------------
+     * Application
+     * ---------------------------------------------------------
+     */
+
     return (
         <>
+
             <div
                 inert={
                     teamPendingDeletion
@@ -773,17 +1187,26 @@ export default function App() {
                         : undefined
                 }
             >
+
                 {view !== "admin" && (
+
                     <AppHeader
-                        currentView={view}
-                        onViewChange={setView}
+                        currentView={
+                            view
+                        }
+                        onViewChange={
+                            setView
+                        }
                     />
+
                 )}
 
                 {error && (
+
                     <p role="alert">
                         {error}
                     </p>
+
                 )}
 
                 <main>
@@ -791,6 +1214,7 @@ export default function App() {
                 </main>
 
                 {recentlyDeletedTeam && (
+
                     <UndoDeleteToast
                         teamName={
                             recentlyDeletedTeam.name
@@ -799,20 +1223,30 @@ export default function App() {
                             handleRestoreTeam
                         }
                     />
+
                 )}
+
             </div>
 
             {teamPendingDeletion && (
+
                 <DeleteTeamDialog
-                    team={teamPendingDeletion}
-                    onCancel={() =>
-                        setTeamPendingDeletion(null)
+                    team={
+                        teamPendingDeletion
+                    }
+                    onCancel={
+                        () =>
+                            setTeamPendingDeletion(
+                                null
+                            )
                     }
                     onConfirm={
                         handleConfirmDeleteTeam
                     }
                 />
+
             )}
+
         </>
     );
 }

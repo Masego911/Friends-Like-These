@@ -2,7 +2,7 @@ import { request } from "./api";
 export interface EventSettingsResponse { id: string; name: string; eventDate: string; registrationDeadline: string | null; status: string; totalRounds: number; currentRound: number; current: boolean; }
 export interface EventSummary { id:string; name:string; eventDate:string; status:string; totalRounds:number; currentRound:number; teamCount:number; current:boolean; }
 export interface HistoricalTeam { id:string; name:string; members:string[]; score:number; }
-export interface EventDetail extends EventSettingsResponse { teamCount:number; teams:HistoricalTeam[]; }
+export interface EventDetail extends Omit<EventSettingsResponse,"current"> { teamCount:number; teams:HistoricalTeam[]; }
 export interface LeaderboardRow { position:number; teamId:string; teamName:string; score:number; }
 export const getCurrentEvent = () => request<EventSettingsResponse>("/api/events/current");
 export const updateRegistrationDeadline = (registrationDeadline: string) => request<EventSettingsResponse>("/api/events/current/settings", { method: "PATCH", body: JSON.stringify({ registrationDeadline }) });

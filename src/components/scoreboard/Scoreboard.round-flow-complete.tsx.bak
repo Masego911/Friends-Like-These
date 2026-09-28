@@ -21,18 +21,6 @@ interface ScoreboardProps {
     rounds: GameRound[];
     roundStandings: RoundStanding[];
     registrationFormUrl?: string;
-
-    /*
-     * Real event lifecycle status supplied by App.tsx.
-     *
-     * Examples:
-     * DRAFT
-     * REGISTRATION_OPEN
-     * REGISTRATION_CLOSED
-     * LIVE
-     * COMPLETED
-     */
-    eventStatus: string | null;
 }
 
 /*
@@ -53,16 +41,9 @@ type WinnerTransition = {
     score: number;
 };
 
-type GrandWinnerTransition = {
-    type: "GRAND_WINNER";
-    teamNames: string[];
-    score: number;
-};
-
 type TransitionState =
     | StartTransition
     | WinnerTransition
-    | GrandWinnerTransition
     | null;
 
 function Scoreboard({
@@ -71,7 +52,6 @@ function Scoreboard({
                         rounds,
                         roundStandings,
                         registrationFormUrl,
-                        eventStatus,
                     }: ScoreboardProps) {
 
     /*
@@ -88,7 +68,7 @@ function Scoreboard({
         );
 
     /*
-     * Convert round standings into Team objects so the
+     * Convert the round standings into Team objects so the
      * existing TeamList can render the live round leaderboard.
      */
     const roundTeams: Team[] =
@@ -103,10 +83,7 @@ function Scoreboard({
 
     /*
      * During an active round we display only that round's
-     * points.
-     *
-     * Between rounds and after game completion we display
-     * cumulative totals.
+     * points. Between rounds we display cumulative totals.
      */
     const displayedTeams =
         activeRound
@@ -128,6 +105,13 @@ function Scoreboard({
      * ---------------------------------------------------------
      * Preserve latest round standings
      * ---------------------------------------------------------
+     *
+     * When End Round is pressed the application changes back
+     * to cumulative standings.
+     *
+     * We preserve the final live-round standings so the winner
+     * celebration always uses the actual winner of that round,
+     * not the cumulative overall leader.
      */
 
     const latestRoundStandingsRef =
@@ -151,32 +135,6 @@ function Scoreboard({
 
     /*
      * ---------------------------------------------------------
-     * Preserve the latest cumulative leaderboard
-     * ---------------------------------------------------------
-     *
-     * Complete Game can change lifecycle state at essentially
-     * the same time as the public scoreboard refreshes.
-     *
-     * Keeping the latest non-empty leaderboard means the
-     * Grand Winner animation always has a final cumulative
-     * result available.
-     */
-
-    const latestOverallTeamsRef =
-        useRef<Team[]>([]);
-
-    useEffect(() => {
-
-        if (teams.length > 0) {
-
-            latestOverallTeamsRef.current =
-                [...teams];
-        }
-
-    }, [teams]);
-
-    /*
-     * ---------------------------------------------------------
      * Transition state
      * ---------------------------------------------------------
      */
@@ -192,6 +150,12 @@ function Scoreboard({
      * ---------------------------------------------------------
      * Overall standings reveal
      * ---------------------------------------------------------
+     *
+     * This becomes true only after the Round Winner screen
+     * finishes.
+     *
+     * It is deliberately NOT connected to the one-second
+     * polling cycle.
      */
 
     const [
@@ -199,154 +163,20 @@ function Scoreboard({
         setRevealOverallStandings,
     ] = useState(false);
 
+    /*
+     * A monotonically increasing key lets TeamList mount a new
+     * reveal sequence after each completed round.
+     *
+     * Round 1 -> 1
+     * Round 2 -> 2
+     * Round 3 -> 3
+     *
+     * Polling does not change this value.
+     */
     const [
         overallRevealKey,
         setOverallRevealKey,
     ] = useState(0);
-
-    /*
-     * ---------------------------------------------------------
-     * Event lifecycle tracking
-     * ---------------------------------------------------------
-     *
-     * We specifically detect:
-     *
-     * LIVE -> COMPLETED
-     *
-     * This prevents Grand Winner from appearing:
-     *
-     * - when the page first loads
-     * - between rounds
-     * - when registration closes
-     * - during normal polling
-     */
-
-    const previousEventStatus =
-        useRef<
-            string | null | undefined
-        >(undefined);
-
-    /*
-     * Prevent an ordinary Round Winner timer from bringing the
-     * Overall Standings screen back while the Grand Winner
-     * celebration is running.
-     */
-    const gameCompletedRef =
-        useRef(false);
-
-    /*
-     * ---------------------------------------------------------
-     * Detect game completion
-     * ---------------------------------------------------------
-     */
-
-    useEffect(() => {
-
-        /*
-         * Initial load.
-         *
-         * Record the lifecycle state without manufacturing a
-         * Grand Winner celebration on page refresh.
-         */
-        if (
-            previousEventStatus.current ===
-            undefined
-        ) {
-
-            previousEventStatus.current =
-                eventStatus;
-
-            return;
-        }
-
-        const oldStatus =
-            previousEventStatus.current;
-
-        previousEventStatus.current =
-            eventStatus;
-
-        /*
-         * Only a genuine LIVE -> COMPLETED transition should
-         * launch the final celebration.
-         */
-        if (
-            oldStatus !== "LIVE" ||
-            eventStatus !== "COMPLETED"
-        ) {
-            return;
-        }
-
-        gameCompletedRef.current =
-            true;
-
-        /*
-         * Stop any ordinary overall reveal.
-         */
-        setRevealOverallStandings(
-            false
-        );
-
-        /*
-         * Final winner is based on cumulative game score,
-         * NOT the final round score.
-         */
-        const finalLeaderboard =
-            [
-                ...(
-                    teams.length > 0
-                        ? teams
-                        : latestOverallTeamsRef.current
-                ),
-            ].sort(
-                (a, b) => {
-
-                    const scoreDifference =
-                        b.score - a.score;
-
-                    if (
-                        scoreDifference !== 0
-                    ) {
-                        return scoreDifference;
-                    }
-
-                    /*
-                     * Stable ordering for equal scores.
-                     *
-                     * This does NOT claim a competitive
-                     * tie-break rule. It simply prevents
-                     * rendering order from jumping.
-                     */
-                    return a.id.localeCompare(
-                        b.id
-                    );
-                }
-            );
-
-        const grandWinner = finalLeaderboard[0];
-
-        /*
-         * Never invent a winner if there are no teams.
-         */
-        if (!grandWinner) {
-
-            setTransition(null);
-
-            return;
-        }
-
-        setTransition({
-            type: "GRAND_WINNER",
-            teamNames: finalLeaderboard
-                .filter(team => team.score === grandWinner.score)
-                .map(team => team.name),
-            score:
-            grandWinner.score,
-        });
-
-    }, [
-        eventStatus,
-        teams,
-    ]);
 
     /*
      * ---------------------------------------------------------
@@ -393,14 +223,10 @@ function Scoreboard({
         ) {
 
             /*
-             * A new live round means the game is active again.
+             * We are entering live round mode, so any previous
+             * overall reveal is finished.
              */
-            gameCompletedRef.current =
-                false;
-
-            setRevealOverallStandings(
-                false
-            );
+            setRevealOverallStandings(false);
 
             setTransition({
                 type: "START",
@@ -440,13 +266,22 @@ function Scoreboard({
             currentRoundNumber === null
         ) {
 
-            setRevealOverallStandings(
-                false
-            );
+            /*
+             * Do not reveal Overall Standings underneath the
+             * winner celebration.
+             */
+            setRevealOverallStandings(false);
 
+            /*
+             * Use the preserved standings from the round that
+             * just ended.
+             */
             const completedStandings =
                 latestRoundStandingsRef.current;
 
+            /*
+             * Sort a copy so API state is never mutated.
+             */
             const sortedFinalStandings =
                 [...completedStandings]
                     .sort(
@@ -472,6 +307,12 @@ function Scoreboard({
 
             } else {
 
+                /*
+                 * Defensive fallback.
+                 *
+                 * If no round standings exist, do not invent
+                 * a winner.
+                 */
                 setTransition(null);
             }
 
@@ -479,20 +320,18 @@ function Scoreboard({
                 currentRoundNumber;
 
             /*
+             * -------------------------------------------------
+             * WINNER -> OVERALL STANDINGS
+             * -------------------------------------------------
+             *
              * Winner celebration lasts 3.6 seconds.
              *
-             * If Complete Game is pressed during this period,
-             * the Grand Winner transition takes priority.
+             * Only after it has completed do we trigger the
+             * cumulative leaderboard reveal.
              */
             const timer =
                 window.setTimeout(
                     () => {
-
-                        if (
-                            gameCompletedRef.current
-                        ) {
-                            return;
-                        }
 
                         setTransition(null);
 
@@ -631,6 +470,10 @@ function Scoreboard({
                                 }
                         </span>
 
+                            {/* ===================================
+                            LARGE TROPHY
+                            =================================== */}
+
                             <div
                                 className="scoreboard-winner__trophy"
                                 aria-hidden="true"
@@ -727,152 +570,6 @@ function Scoreboard({
                 )}
 
             {/* ===============================================
-                GRAND WINNER
-                =============================================== */}
-
-            {transition?.type ===
-                "GRAND_WINNER" && (
-
-                    <div
-                        className="
-                        scoreboard-transition
-                        scoreboard-transition--grand-winner
-                    "
-                        role="status"
-                        aria-live="assertive"
-                    >
-
-                        <div
-                            className="scoreboard-grand-winner__confetti"
-                            aria-hidden="true"
-                        >
-                            {Array.from(
-                                { length: 30 }
-                            ).map(
-                                (_, index) => (
-                                    <span
-                                        key={
-                                            index
-                                        }
-                                    />
-                                )
-                            )}
-                        </div>
-
-                        <div className="scoreboard-transition__colour-bar">
-                            <span />
-                            <span />
-                            <span />
-                            <span />
-                            <span />
-                        </div>
-
-                        <div className="scoreboard-transition__content scoreboard-grand-winner">
-
-                        <span className="scoreboard-transition__eyebrow">
-                            Friends Like These
-                        </span>
-
-                            <span className="scoreboard-grand-winner__intro">
-                            FINAL RESULTS
-                        </span>
-
-                            <div
-                                className="scoreboard-grand-winner__trophy"
-                                aria-hidden="true"
-                            >
-
-                                <svg
-                                    viewBox="0 0 120 120"
-                                    role="img"
-                                >
-
-                                    <path
-                                        className="scoreboard-grand-winner__trophy-cup"
-                                        d="
-                                        M38 18
-                                        H82
-                                        V39
-                                        C82 57 73 68 64 72
-                                        V84
-                                        H76
-                                        V94
-                                        H44
-                                        V84
-                                        H56
-                                        V72
-                                        C47 68 38 57 38 39
-                                        Z
-                                    "
-                                    />
-
-                                    <path
-                                        className="scoreboard-grand-winner__trophy-handle"
-                                        d="
-                                        M38 26
-                                        H22
-                                        V37
-                                        C22 50 30 57 43 58
-                                    "
-                                    />
-
-                                    <path
-                                        className="scoreboard-grand-winner__trophy-handle"
-                                        d="
-                                        M82 26
-                                        H98
-                                        V37
-                                        C98 50 90 57 77 58
-                                    "
-                                    />
-
-                                    <path
-                                        className="scoreboard-grand-winner__trophy-base"
-                                        d="
-                                        M38 94
-                                        H82
-                                        V104
-                                        H38
-                                        Z
-                                    "
-                                    />
-
-                                </svg>
-
-                            </div>
-
-                            <span className="scoreboard-grand-winner__label">
-                            {transition.teamNames.length > 1
-                                ? "GRAND WINNERS"
-                                : "GRAND WINNER"}
-                        </span>
-
-                            <strong className="scoreboard-grand-winner__team">
-                                {
-                                    transition.teamNames.join(" • ")
-                                }
-                            </strong>
-
-                            <span className="scoreboard-grand-winner__score">
-                            {
-                                transition.score
-                            }{" "}
-                                POINTS
-                        </span>
-
-                            <span className="scoreboard-grand-winner__message">
-                            {transition.teamNames.length > 1
-                                ? "TIED CHAMPIONS OF FRIENDS LIKE THESE"
-                                : "CHAMPIONS OF FRIENDS LIKE THESE"}
-                        </span>
-
-                        </div>
-
-                    </div>
-
-                )}
-
-            {/* ===============================================
                 MAIN SCOREBOARD
                 =============================================== */}
 
@@ -896,9 +593,13 @@ function Scoreboard({
                 >
 
                     <span className="scoreboard__colour-block scoreboard__colour-block--orange" />
+
                     <span className="scoreboard__colour-block scoreboard__colour-block--red" />
+
                     <span className="scoreboard__colour-block scoreboard__colour-block--purple" />
+
                     <span className="scoreboard__colour-block scoreboard__colour-block--blue" />
+
                     <span className="scoreboard__colour-block scoreboard__colour-block--teal" />
 
                 </div>
@@ -919,9 +620,7 @@ function Scoreboard({
 
                     {activeRound
                         ? `ROUND ${activeRound.roundNumber} OF ${rounds.length}`
-                        : eventStatus === "COMPLETED"
-                            ? "FINAL STANDINGS"
-                            : "OVERALL STANDINGS"}
+                        : "OVERALL STANDINGS"}
 
                 </p>
 
@@ -942,12 +641,17 @@ function Scoreboard({
 
                     {activeRound
                         ? `Round ${activeRound.roundNumber} Standings`
-                        : eventStatus === "COMPLETED"
-                            ? "Final Standings"
-                            : "Overall Standings"}
+                        : "Overall Standings"}
 
                 </h2>
 
+                {/*
+                 * The key changes only after a completed round.
+                 *
+                 * This forces one fresh TeamList mount for the
+                 * reveal animation without allowing polling to
+                 * restart it every second.
+                 */}
                 <TeamList
                     key={
                         activeRound

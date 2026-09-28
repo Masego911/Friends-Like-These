@@ -1,0 +1,182 @@
+import {
+    useLayoutEffect,
+    useRef,
+} from "react";
+
+import type { Team } from "../../models/Team";
+import TeamCard from "./TeamCard";
+import "./TeamList.css";
+
+interface TeamListProps {
+    teams: Team[];
+}
+
+function TeamList({
+                      teams,
+                  }: TeamListProps) {
+
+    /*
+     * Sort a copy of the teams so the original array
+     * supplied by the parent is never mutated.
+     */
+    const sortedTeams =
+        [...teams].sort(
+            (a, b) =>
+                b.score - a.score
+        );
+
+    /*
+     * Stores the previous vertical position of each team.
+     *
+     * When React renders the new ranking we compare the
+     * team's old position with its new position and animate
+     * between them.
+     */
+    const previousPositions =
+        useRef<Map<string, number>>(
+            new Map()
+        );
+
+    const listRef =
+        useRef<HTMLElement | null>(
+            null
+        );
+
+    /*
+     * ---------------------------------------------------------
+     * Rank movement animation
+     * ---------------------------------------------------------
+     */
+
+    useLayoutEffect(() => {
+
+        const list =
+            listRef.current;
+
+        if (!list) {
+            return;
+        }
+
+        const cards =
+            Array.from(
+                list.querySelectorAll<HTMLElement>(
+                    "[data-team-id]"
+                )
+            );
+
+        const nextPositions =
+            new Map<string, number>();
+
+        cards.forEach((card) => {
+
+            const teamId =
+                card.dataset.teamId;
+
+            if (!teamId) {
+                return;
+            }
+
+            const currentTop =
+                card.getBoundingClientRect().top;
+
+            nextPositions.set(
+                teamId,
+                currentTop
+            );
+
+            const previousTop =
+                previousPositions.current.get(
+                    teamId
+                );
+
+            /*
+             * New teams have no previous position and
+             * therefore should not slide in from nowhere.
+             */
+            if (
+                previousTop === undefined
+            ) {
+                return;
+            }
+
+            const movement =
+                previousTop - currentTop;
+
+            /*
+             * The team's ranking has not changed.
+             */
+            if (
+                Math.abs(movement) < 1
+            ) {
+                return;
+            }
+
+            /*
+             * FLIP animation.
+             *
+             * React has already moved the element into its
+             * new sorted position. We visually place it back
+             * where it came from and animate it into the new
+             * position.
+             */
+            card.animate(
+                [
+                    {
+                        transform:
+                            `translateY(${movement}px)`,
+                    },
+                    {
+                        transform:
+                            "translateY(0)",
+                    },
+                ],
+                {
+                    duration: 500,
+                    easing:
+                        "cubic-bezier(0.22, 1, 0.36, 1)",
+                }
+            );
+        });
+
+        previousPositions.current =
+            nextPositions;
+
+    }, [sortedTeams]);
+
+    /*
+     * ---------------------------------------------------------
+     * Render
+     * ---------------------------------------------------------
+     */
+
+    return (
+        <section
+            ref={listRef}
+            className="team-list"
+        >
+
+            {sortedTeams.length === 0 && (
+
+                <p className="team-list__empty">
+                    No teams have registered yet.
+                </p>
+
+            )}
+
+            {sortedTeams.map(
+                (team, index) => (
+
+                    <TeamCard
+                        key={team.id}
+                        team={team}
+                        rank={index + 1}
+                    />
+
+                )
+            )}
+
+        </section>
+    );
+}
+
+export default TeamList;

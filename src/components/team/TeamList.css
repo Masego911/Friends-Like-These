@@ -1,6 +1,290 @@
 .team-list {
-    display: flex; /* Stacks the team cards vertically. */
+    display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     width: 100%;
+    position: relative;
+}
+
+/*
+ * Keeps each leaderboard row stable while FLIP animations
+ * move teams between ranking positions.
+ */
+.team-list > .team-card {
+    width: 100%;
+    will-change: transform;
+}
+
+/*
+ * Empty leaderboard state.
+ */
+.team-list__empty {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 2rem;
+
+    box-sizing: border-box;
+
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+/*
+ * On smaller screens we reduce the space between rows,
+ * while keeping the leaderboard structure unchanged.
+ */
+@media (max-width: 600px) {
+    .team-list {
+        gap: 0.75rem;
+    }
+
+    .team-list__empty {
+        padding: 1.5rem 1rem;
+    }
+}
+
+/*
+ * Accessibility:
+ * users who request reduced motion should not see
+ * leaderboard movement animations.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .team-list > .team-card {
+        will-change: auto;
+    }
+}
+
+/* =========================================================
+   NEW LEADER CELEBRATION
+   ========================================================= */
+
+.team-card--new-leader {
+    z-index: 5;
+
+    border-color: rgba(245, 158, 11, 0.8);
+
+    box-shadow:
+            0 10px 30px rgba(245, 158, 11, 0.22),
+            0 0 0 3px rgba(245, 158, 11, 0.08);
+
+    animation:
+            newLeaderCardCelebration
+            1.6s
+            cubic-bezier(0.22, 1, 0.36, 1)
+            both;
+}
+
+.team-card__leader-banner {
+    position: absolute;
+
+    top: -15px;
+    left: 50%;
+
+    z-index: 10;
+
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+
+    padding:
+            0.4rem
+            0.85rem;
+
+    border-radius: 999px;
+
+    color: #0b1f3a;
+    background: #f59e0b;
+
+    box-shadow:
+            0 5px 16px
+            rgba(15, 23, 42, 0.2);
+
+    font-size: 0.72rem;
+    font-weight: 900;
+
+    letter-spacing: 0.12em;
+
+    white-space: nowrap;
+
+    transform:
+            translateX(-50%);
+
+    animation:
+            newLeaderBanner
+            1.6s
+            cubic-bezier(0.22, 1, 0.36, 1)
+            both;
+}
+
+.team-card__leader-star {
+    color: #ffffff;
+
+    animation:
+            newLeaderStar
+            700ms
+            ease-out
+            both;
+}
+
+@keyframes newLeaderCardCelebration {
+
+    0% {
+        transform: scale(1);
+    }
+
+    18% {
+        transform: scale(1.025);
+    }
+
+    38% {
+        transform: scale(1);
+    }
+
+    58% {
+        box-shadow:
+                0 12px 34px
+                rgba(245, 158, 11, 0.3),
+                0 0 0 5px
+                rgba(245, 158, 11, 0.12);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes newLeaderBanner {
+
+    0% {
+        opacity: 0;
+
+        transform:
+                translateX(-50%)
+                translateY(10px)
+                scale(0.75);
+    }
+
+    18% {
+        opacity: 1;
+
+        transform:
+                translateX(-50%)
+                translateY(0)
+                scale(1.08);
+    }
+
+    30% {
+        transform:
+                translateX(-50%)
+                translateY(0)
+                scale(1);
+    }
+
+    78% {
+        opacity: 1;
+
+        transform:
+                translateX(-50%)
+                translateY(0)
+                scale(1);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+                translateX(-50%)
+                translateY(-8px)
+                scale(0.96);
+    }
+}
+
+@keyframes newLeaderStar {
+
+    0% {
+        transform:
+                rotate(-25deg)
+                scale(0);
+    }
+
+    60% {
+        transform:
+                rotate(12deg)
+                scale(1.25);
+    }
+
+    100% {
+        transform:
+                rotate(0)
+                scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .team-card--new-leader,
+    .team-card__leader-banner,
+    .team-card__leader-star {
+        animation-duration: 0.01ms;
+        animation-delay: 0ms;
+    }
+}
+
+/* =========================================================
+   OVERALL STANDINGS REVEAL
+   ========================================================= */
+
+.team-card--reveal {
+    opacity: 0;
+
+    animation:
+            standingsCardReveal
+            650ms
+            cubic-bezier(0.22, 1, 0.36, 1)
+            forwards;
+}
+
+@keyframes standingsCardReveal {
+
+    0% {
+        opacity: 0;
+
+        transform:
+                translateY(32px)
+                scale(0.96);
+    }
+
+    65% {
+        opacity: 1;
+
+        transform:
+                translateY(-4px)
+                scale(1.01);
+    }
+
+    100% {
+        opacity: 1;
+
+        transform:
+                translateY(0)
+                scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .team-card--reveal {
+        opacity: 1;
+
+        animation-duration: 0.01ms;
+
+        animation-delay:
+                0ms !important;
+    }
 }
