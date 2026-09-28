@@ -1,687 +1,633 @@
 # Friends Like These
 
-Friends Like These is a responsive games-night scoring and event-management application designed for live team competitions.
+### Games Night Management & Live Scoring Platform
 
-The project began as a CampusKey games-night application and is now being rebuilt as a more structured full-stack system using React, TypeScript and a planned Java Spring Boot backend.
+Friends Like These is a full-stack web application for managing live team-based games nights.
 
-The application is designed to support live events where administrators manage teams and scores while participants and spectators follow a public leaderboard in real time.
+The platform brings together team registration, game setup, round management, live scoring, leaderboards and event history in one system. Organisers manage the game through a secure administration dashboard while participants and spectators follow the competition through a separate public scoreboard.
 
-The interface is being designed for:
-
-- TVs and large event displays
-- Desktop and laptop computers
-- Tablets
-- Mobile phones
+Friends Like These started as a practical solution for running a CampusKey games night and has since evolved into a reusable full-stack event platform.
 
 ---
 
-# Project Status
+## Project Evolution
 
-The project is currently undergoing a full rebuild.
+### The Original Friends Like These
 
-The active frontend rebuild is located on the:
+Friends Like These was originally developed for a live CampusKey student games night.
 
-`react-rebuild`
+The first version focused on solving the immediate operational challenge of running the event. Instead of manually tracking registrations and scores, the application provided a digital scoreboard that organisers could update while participants followed the leaderboard.
 
-branch.
+The original system included:
 
-The original Friends Like These implementation remains preserved on:
+- Team registration
+- QR-based access to registration
+- Google Forms and Google Sheets integration
+- Live team scoring
+- Automatic leaderboard ranking
+- Administrator scoring controls
+- Registration countdown
+- Firebase Realtime Database synchronisation
+- Responsive display for event screens and mobile devices
 
-`main`
+That version demonstrated the value of the idea during an actual live event.
 
-Current development status:
-
-- React frontend: In development
-- TypeScript migration: Implemented
-- Responsive scoreboard: Implemented
-- Admin dashboard: Implemented
-- Team management: Implemented locally
-- Score management: Implemented locally
-- Score history: Implemented locally
-- Spring Boot backend: Next development phase
-- PostgreSQL persistence: Planned
-- Authentication and authorisation: Planned
-- Real-time backend synchronisation: Planned
-- Azure deployment: Planned
+However, it was primarily a frontend-driven event tool rather than a complete games management system.
 
 ---
 
-# Project Background
+## The Rebuild
 
-The original Friends Like These application was developed to support a CampusKey student games-night competition.
+The current version is a substantial rebuild of the original application.
 
-The first implementation demonstrated the core concept by allowing event organisers to manage teams, update scores and display a live leaderboard.
+Instead of developing Friends Like These around one specific event, the application is being redesigned as a reusable **Games Night Management Platform**.
 
-The rebuild expands that concept into a maintainable full-stack application.
+The rebuild introduces a proper full-stack architecture:
 
-The new version separates:
+```text
+React + TypeScript
+        |
+        | REST API
+        v
+Java Spring Boot
+        |
+        v
+Microsoft SQL Server
+```
 
-- presentation
-- application state
-- business logic
-- persistence
-- authentication
-- external integrations
+Google Forms and Google Sheets remain part of the registration workflow, but the Spring Boot backend now controls application state, business rules, scoring, events, rounds and persistence.
 
-This allows the application to grow beyond a single event while remaining easier to maintain and test.
+This allows Friends Like These to manage the full lifecycle of a games night rather than only displaying scores.
 
 ---
 
-# Current Features
+# What Friends Like These Does
+
+A games night can now move through a structured process:
+
+```text
+Create Game
+     |
+     v
+Open Registration
+     |
+     v
+Teams Register
+     |
+     v
+Close Registration
+     |
+     v
+Start Game
+     |
+     v
+Start Round
+     |
+     v
+Live Scoring
+     |
+     v
+End Round
+     |
+     v
+Next Round
+     |
+     v
+Complete Game
+     |
+     v
+Previous Games
+```
+
+The public scoreboard and administration dashboard use the same backend game state but serve different purposes.
+
+The **Admin Dashboard** is designed for the organiser running the event.
+
+The **Public Scoreboard** is designed for the audience watching the game.
+
+---
+
+# Features
 
 ## Public Scoreboard
 
-The public scoreboard provides the spectator-facing event experience.
+The public scoreboard provides the audience-facing view of the competition.
 
-Current functionality includes:
+It displays:
 
-- Team leaderboard
-- Automatic ranking based on score
-- Team names and members
-- Gold, silver and bronze medal indicators
-- Registration countdown
-- Registration QR code
-- Responsive team cards
-- Automatic score display updates when application state changes
-- Layouts designed for TVs, desktops, tablets and mobile phones
+- Competing teams
+- Current scores
+- Leaderboard positions
+- Current round information
+- Registration information
+- Game status
 
-The scoreboard is intentionally separated from administrative controls so that it can be displayed on a public event screen.
+The scoreboard automatically retrieves current game information from the backend.
 
----
-
-# Admin Dashboard
-
-The administration interface provides controls for managing the live event.
-
-Current functionality includes:
-
-- Event settings
-- Registration deadline management
-- Team management
-- Add Team
-- Edit Team
-- Delete Team
-- Delete confirmation
-- Undo accidental team deletion
-- Quick score adjustments
-- Custom score adjustments
-- Score history
-- Reset All Scores
-- Reset confirmation
-- Responsive administration layout
+It is designed to work across large displays, laptops, tablets and mobile devices.
 
 ---
 
-# Team Management
+## Admin Dashboard
 
-Administrators can currently:
+Organisers manage Friends Like These through an authenticated administration interface.
 
-- Add teams
-- Edit existing teams
-- Delete teams
-- View team member counts
-- Manage team scores
+The dashboard includes:
 
-Deleting a team requires confirmation.
+- Dashboard overview
+- Live Scoring
+- Team Management
+- Registration Management
+- Game Setup
+- Previous Games
+- Settings
 
-After deletion, an undo notification remains available for six seconds so that an accidental deletion can be reversed.
-
----
-
-# Score Management
-
-Administrators can award or deduct points directly from the team-management interface.
-
-Quick score controls currently include:
-
-- +5
-- +10
-- +15
-- +20
-- -5
-- Custom
-
-Each quick-score button uses a distinct visual treatment so administrators can identify scoring actions quickly during a live event.
-
-Custom score adjustments allow an administrator to specify an amount and reason.
-
-Team scores are prevented from becoming negative.
+This separates operational controls from the public competition screen.
 
 ---
 
-# Score History
+## Live Scoring
 
-Score changes are recorded in the frontend application state.
+The Live Scoring interface allows organisers to update team scores while the competition is running.
 
-A score event contains information such as:
-
-- Team ID
-- Amount changed
-- Reason
-- Timestamp
-
-The Score History panel provides administrators with a record of scoring activity during the event.
-
-The panel uses a fixed-size scrollable interface so that a large score history does not continually increase the height of the dashboard.
-
-Persistent score history will be implemented when the Spring Boot backend and PostgreSQL database are introduced.
-
----
-
-# Reset All Scores
-
-Administrators can reset all team scores to zero.
-
-Because this is a high-impact operation, the application requires confirmation before performing the reset.
-
-The backend version will also persist reset activity so that important scoring operations remain auditable.
-
----
-
-# Responsive Design
-
-Responsive design is a core project requirement.
-
-Friends Like These must operate correctly on multiple device types.
-
-## TV / Large Display
-
-The public scoreboard should prioritise:
-
-- Large team names
-- Large scores
-- Rankings
-- Registration countdown
-- High visibility
-- Readability from a distance
-
-Administrative controls are not the primary TV use case.
-
-## Desktop / Laptop
-
-Desktop devices provide the complete administration experience, including:
-
-- Event settings
-- Team management
-- Score controls
-- Score history
-- Modal forms
-
-## Tablet
-
-Tablet layouts must provide:
-
-- Touch-friendly controls
-- Reduced column layouts
-- Responsive modals
-- No horizontal page overflow
-
-## Mobile Phone
-
-Mobile layouts must provide:
-
-- Single-column layouts where appropriate
-- Large touch targets
-- Wrapped score controls
-- Responsive team cards
-- Full-width or near-full-width modal interfaces
-- No horizontal page overflow
-
-Responsive behaviour will continue to be tested throughout development rather than being added only at the end.
-
----
-
-# Current Technology Stack
-
-## Frontend
-
-- React
-- TypeScript
-- Vite
-- CSS
-- ESLint
-
-## Development Tools
-
-- IntelliJ IDEA
-- Git
-- GitHub
-- npm
-
----
-
-# Planned Backend Technology
-
-The backend will be developed as a separate project.
-
-Planned technologies include:
-
-- Java 21
-- Spring Boot
-- Spring Web
-- Spring Data JPA
-- Spring Security
-- Jakarta Validation
-- PostgreSQL
-- JWT authentication
-
-The backend will use object-oriented programming with a lightweight domain-oriented structure.
-
-Full enterprise Domain-Driven Design is not currently required for the size of this application.
-
----
-
-# Planned Architecture
-
-The completed application is intended to follow this structure:
+Quick scoring controls include:
 
 ```text
-React Frontend
-      |
-      | HTTP / REST
-      |
-      v
-Spring Boot Backend
-      |
-      | JPA
-      |
-      v
-PostgreSQL Database
+-10   -5   -1   +1   +5   +10
 ```
 
-Real-time communication will later be added so that score changes made by an administrator can appear on public scoreboard devices without requiring a manual refresh.
+Custom score adjustments can also be made when required.
 
-For example:
+Teams are automatically ranked according to their current scores.
+
+Every score adjustment is processed by the backend and recorded as score activity.
+
+---
+
+## Round Management
+
+Games can contain multiple rounds.
+
+Each round has its own lifecycle:
 
 ```text
-Admin Laptop / Phone
-        |
-        | Score update
-        v
+PENDING
+   |
+   v
+IN_PROGRESS
+   |
+   v
+COMPLETED
+```
+
+Administrators can start and end rounds directly from the game controls.
+
+Scoring is only permitted when:
+
+```text
+Game Status = LIVE
+AND
+Round Status = IN_PROGRESS
+```
+
+These rules are enforced by the backend rather than relying only on disabled frontend controls.
+
+---
+
+## Game Progress Controls
+
+Round controls are also available directly from the Live Scoring interface.
+
+This allows the organiser running the game to:
+
+- Start the next round
+- Score teams
+- End the current round
+- Continue to the next round
+
+without repeatedly moving between the scoring screen and Game Setup.
+
+---
+
+## Team Management
+
+The system supports management of teams participating in the current game.
+
+Administrators can:
+
+- Create teams
+- View team members
+- Edit teams
+- Manage imported teams
+- View current scores
+- View leaderboard positions
+
+Team information is persisted in SQL Server.
+
+---
+
+# Registration Management
+
+Friends Like These integrates with Google Forms and Google Sheets for participant registration.
+
+Participants register through a Google Form.
+
+Their responses are stored in a private Google Sheet and synchronised with the Friends Like These backend.
+
+```text
+Google Form
+     |
+     v
+Google Sheets
+     |
+     v
+Google Sheets API
+     |
+     v
 Spring Boot
-        |
-        | Persist
-        v
-PostgreSQL
-        |
-        | Live update
-        v
-TV / Tablet / Phone Scoreboards
+     |
+     v
+SQL Server
+     |
+     v
+React
 ```
+
+The registration system supports:
+
+- Automatic registration synchronisation
+- Manual synchronisation
+- Registration previews
+- Duplicate-team detection
+- Conflict detection
+- Team-member importing
+- Registration status monitoring
+- Protection against simultaneous sync operations
+
+Google Sheets is used as the registration source rather than as the application's primary database.
 
 ---
 
-# Backend Structure
+# Event Lifecycle
 
-The planned Spring Boot backend will use packages similar to:
+Games follow an explicit lifecycle:
 
 ```text
-com.friendslikethese.backend
-|
-|-- controller
-|-- service
-|-- repository
-|-- domain
-|-- dto
-|-- security
-|-- config
-`-- exception
+DRAFT
+  |
+  v
+REGISTRATION_OPEN
+  |
+  v
+REGISTRATION_CLOSED
+  |
+  v
+LIVE
+  |
+  v
+COMPLETED
+  |
+  v
+ARCHIVED
 ```
 
-The basic application flow will be:
+This lifecycle controls what the system allows at each stage of an event.
+
+For example, teams cannot continue registering after registration closes, and scoring cannot occur before the game and a round have started.
+
+The backend maintains an explicitly designated current event instead of assuming that the most recently created event is the active game.
+
+---
+
+# Previous Games
+
+Completed games are retained rather than being deleted when a new event begins.
+
+The Previous Games area provides access to historical information including:
+
+- Event details
+- Participating teams
+- Team members
+- Final leaderboard
+- Rounds
+- Score activity
+
+This allows Friends Like These to build an event history over time.
+
+---
+
+# Authentication & Security
+
+Administrative functionality is protected through the Spring Boot security layer.
+
+The application includes:
+
+- Administrator authentication
+- Protected admin endpoints
+- Password hashing
+- Login throttling
+- Session-based authentication
+- Role-based backend security
+
+Sensitive credentials are not stored directly in the repository.
+
+---
+
+# Score Integrity & Concurrency
+
+Friends Like These is designed for a live environment where several operations can happen at almost the same time.
+
+The backend therefore includes concurrency protection for critical operations.
+
+Score changes update the team score and create the associated score activity within the same transactional operation.
+
+Database locking is used when updating scores to reduce the possibility of conflicting updates.
+
+Event lifecycle changes also use locking and database constraints to protect the current game state.
+
+Registration synchronisation uses a bounded background executor and prevents multiple synchronisation jobs from processing the same registration source simultaneously.
+
+---
+
+# Architecture
 
 ```text
-Controller
-    |
-    v
-Service
-    |
-    v
-Repository
-    |
-    v
-Database
+                     PARTICIPANTS
+                           |
+                           v
+                     Google Form
+                           |
+                           v
+                     Google Sheets
+                           |
+                           v
+                   Google Sheets API
+                           |
+                           v
+              +--------------------------+
+              |   SPRING BOOT BACKEND    |
+              |--------------------------|
+              | Authentication           |
+              | Event Management         |
+              | Registration             |
+              | Team Management          |
+              | Round Engine             |
+              | Scoring                  |
+              | Score Activity           |
+              | Previous Games           |
+              +------------+-------------+
+                           |
+                           v
+                      SQL Server
+                           ^
+                           |
+                        REST API
+                           |
+                 +---------+---------+
+                 |                   |
+                 v                   v
+          Admin Dashboard      Public Scoreboard
+                 \                   /
+                  \                 /
+                   +--- React -----+
 ```
 
-Controllers will handle HTTP communication.
+The Spring Boot backend is the authoritative source for game state and business rules.
 
-Services will contain application and business logic.
-
-Repositories will handle persistence.
-
-Domain classes will represent important application concepts such as teams, score events, users and event settings.
+The React frontend consumes the backend REST API and presents that state through the admin and public interfaces.
 
 ---
 
-# Planned Backend Features
+# Technology Stack
 
-The backend development phase will introduce:
-
-- Persistent teams
-- Persistent scores
-- Persistent score history
-- Persistent event settings
-- Team CRUD operations
-- Score adjustment API
-- Reset score operations
-- Authentication
-- Authorisation
-- Administrator accounts
-- Validation
-- Centralised exception handling
-- Real-time scoreboard synchronisation
-- Registration integration
+| Area | Technology |
+|---|---|
+| Frontend | React |
+| Frontend Language | TypeScript |
+| Build Tool | Vite |
+| Backend | Spring Boot |
+| Backend Language | Java 21 |
+| Database | Microsoft SQL Server |
+| Persistence | Spring Data JPA / Hibernate |
+| Security | Spring Security |
+| Registration Integration | Google Sheets API |
+| Backend Build | Gradle |
+| API | REST |
+| Version Control | Git & GitHub |
 
 ---
 
-# Planned API
+# Repository Structure
 
-The first backend milestone will provide team-management endpoints similar to:
+Friends Like These is maintained as **one full-stack repository**.
 
 ```text
-GET    /api/teams
-POST   /api/teams
-PUT    /api/teams/{id}
-DELETE /api/teams/{id}
+Friends-Like-These/
+│
+├── src/                     # React frontend
+├── public/                  # Frontend assets
+│
+├── backend/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/
+│   │   │   └── resources/
+│   │   └── test/
+│   │
+│   ├── gradle/
+│   ├── build.gradle
+│   ├── gradlew
+│   └── gradlew.bat
+│
+├── package.json
+├── vite.config.ts
+└── README.md
 ```
 
-Additional endpoints will later support:
+The frontend remains at the repository root while the Spring Boot application is contained in `/backend`.
+
+---
+
+# Backend Organisation
+
+The backend is organised around the application's main business domains:
 
 ```text
-/api/scores
-/api/score-events
-/api/event-settings
-/api/auth
+auth/
+common/
+config/
+event/
+registration/
+round/
+score/
+team/
 ```
 
-The final endpoint structure will be determined as the backend domain is implemented.
+This separates authentication, events, registration, scoring and team-management responsibilities instead of placing the application's business logic directly inside controllers.
 
 ---
 
-# Frontend Structure
-
-The current frontend is organised approximately as follows:
-
-```text
-src/
-|
-|-- assets/
-|   `-- branding/
-|
-|-- components/
-|   |
-|   |-- admin/
-|   |   |-- AddTeamForm
-|   |   |-- AdminDashboard
-|   |   |-- AdminEventSettings
-|   |   |-- AdminTeamList
-|   |   |-- DeleteTeamDialog
-|   |   |-- EditTeamForm
-|   |   |-- ScoreAdjustmentForm
-|   |   |-- ScoreHistory
-|   |   `-- UndoDeleteToast
-|   |
-|   |-- layout/
-|   |   `-- AppHeader
-|   |
-|   |-- scoreboard/
-|   |   |-- Countdown
-|   |   |-- RegistrationQR
-|   |   `-- Scoreboard
-|   |
-|   `-- team/
-|       |-- MedalBadge
-|       |-- TeamCard
-|       `-- TeamList
-|
-|-- config/
-|
-|-- models/
-|
-|-- styles/
-|
-|-- App.tsx
-`-- main.tsx
-```
-
----
-
-# State Management
-
-During the frontend development phase, the primary application state is currently held in React.
-
-This includes:
-
-- Teams
-- Scores
-- Score events
-- Registration deadline
-- Delete/undo state
-- Current application view
-
-This is temporary.
-
-Once backend integration begins, the Spring Boot backend and PostgreSQL database will become the authoritative source for persistent application data.
-
-React will then request and update data through the backend API.
-
----
-
-# Data Rules
-
-The rebuild follows several important application rules.
-
-## Scores
-
-A team's score must not fall below zero.
-
-## Score History
-
-Meaningful score changes should produce an auditable score event.
-
-## Team Deletion
-
-Team deletion requires confirmation.
-
-An accidental deletion can currently be undone for a short period.
-
-## Score Reset
-
-Resetting all scores requires confirmation because it affects every team.
-
-## Shared Data
-
-The public scoreboard and admin dashboard must ultimately use the same authoritative backend data.
-
----
-
-# Local Development
+# Running the Project Locally
 
 ## Requirements
 
-Install:
+You will need:
 
 - Node.js
 - npm
+- Java 21
+- Microsoft SQL Server
+- Git
 
-Clone or switch to the frontend rebuild branch.
+Google Cloud credentials are additionally required when using the live Google Sheets registration integration.
 
-Install dependencies:
+---
 
-```bash
+## Run the Frontend
+
+From the repository root:
+
+```powershell
 npm install
-```
-
-Start the Vite development server:
-
-```bash
 npm run dev
 ```
 
-The development server normally runs at:
+The development frontend runs on:
 
 ```text
 http://localhost:5173
 ```
 
-Run ESLint:
+The backend API location can be configured using:
 
-```bash
-npm run lint
+```text
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Create a production build:
+---
 
-```bash
+## Run the Backend
+
+From the repository root:
+
+```powershell
+cd backend
+.\gradlew.bat bootRun
+```
+
+The backend runs on:
+
+```text
+http://localhost:8080
+```
+
+A configured SQL Server database must be available to the backend.
+
+---
+
+# Testing
+
+The backend includes automated tests covering the application's important business behaviour.
+
+Current test coverage includes:
+
+- Application startup
+- Authentication and security
+- Global exception handling
+- Concurrent operations
+- Event lifecycle
+- Event and round integration
+- Google Sheets communication
+- Registration importing
+- Registration synchronisation
+- Round engine behaviour
+- Score adjustments
+- Score activity reset
+
+Run the backend test suite from `/backend`:
+
+```powershell
+.\gradlew.bat test
+```
+
+The frontend production build can be validated using:
+
+```powershell
 npm run build
 ```
 
 ---
 
-# Git Branches
+# Currently in Development
 
-The repository currently uses:
+The next major development area is the public live-scoreboard experience.
 
-## `main`
+During an active round, the public scoreboard is planned to automatically transition from the overall leaderboard to the standings for that specific round.
 
-Contains the original Friends Like These implementation.
+When the administrator ends the round, the audience display will transition back to the updated overall standings.
 
-## `react-rebuild`
+Planned improvements include:
 
-Contains the current React and TypeScript rebuild.
+- Round-specific live standings
+- Automatic Overall → Round transitions
+- Round Complete transitions
+- Animated score changes
+- Smooth leaderboard position changes
+- Branded transition effects
+- Reduced-motion accessibility support
 
-The original application is intentionally preserved while the new version is being developed.
+These features are part of the current development plan and are not yet documented as completed functionality.
 
 ---
 
-# Backend Repository
+# Roadmap
 
-The Spring Boot backend will be developed as a separate IntelliJ project rather than inside the React frontend directory.
+The broader development roadmap includes:
 
-The frontend and backend will therefore have separate:
+- Public scoreboard round experience
+- Expanded automated testing
+- GitHub Actions continuous integration
+- Database migration management
+- Production backend deployment
+- Azure SQL
+- Continuous deployment
+- Monitoring and health checks
+- Event analytics dashboard
 
-- dependency management
-- build processes
-- development servers
-- project structures
+---
 
-During local development:
+# Why Friends Like These Exists
+
+Friends Like These started with a real operational problem.
+
+Running a live games night means managing registrations, participants, teams, rounds and scores while simultaneously keeping the audience informed about what is happening.
+
+The original application solved the immediate scoring and leaderboard problem.
+
+The rebuild takes that experience further by treating the games night as a complete event lifecycle — from registration to live competition and finally historical results.
+
+The project has also become an opportunity to apply software-engineering concepts to a system that has a real use case, including:
+
+- Full-stack application architecture
+- REST API design
+- Relational database design
+- Authentication and security
+- External API integration
+- Transaction management
+- Concurrency
+- Automated testing
+- Responsive interface design
+
+---
+
+## Project Status
+
+**Active development**
+
+The current full-stack rebuild is maintained on:
 
 ```text
-React
-http://localhost:5173
-
-Spring Boot
-http://localhost:8080
-
-PostgreSQL
-localhost:5432
+react-rebuild
 ```
 
----
-
-# Cloud Direction
-
-Azure is the planned cloud platform for the backend.
-
-The intended production architecture is:
-
-```text
-Frontend
-    |
-    v
-Spring Boot API
-Azure App Service
-    |
-    v
-Azure Database for PostgreSQL
-```
-
-The frontend deployment platform will be finalised during the deployment phase.
-
----
-
-# Planned DevOps
-
-Later development phases are intended to include:
-
-- Docker
-- GitHub Actions
-- Automated builds
-- Automated tests
-- Backend deployment
-- Environment configuration
-- Production database configuration
-
----
-
-# Development Roadmap
-
-The current development sequence is:
-
-1. Complete frontend foundation
-2. Create Spring Boot backend
-3. Configure PostgreSQL
-4. Implement Team domain
-5. Implement Team CRUD API
-6. Implement scoring domain
-7. Persist score history
-8. Persist event settings
-9. Implement authentication
-10. Implement authorisation
-11. Connect React to Spring Boot
-12. Add real-time score synchronisation
-13. Add registration integration
-14. Perform multi-device testing
-15. Add Docker
-16. Add CI/CD
-17. Deploy backend and database to Azure
-
-See:
-
-`docs/DEVELOPMENT_ROADMAP.md`
-
-for more detail.
-
----
-
-# Documentation
-
-Additional project documentation is available in:
-
-```text
-docs/
-|-- ARCHITECTURE.md
-|-- DEVELOPMENT_ROADMAP.md
-`-- FRONTEND.md
-```
-
----
-
-# Current Limitations
-
-The current rebuild is still frontend-driven.
-
-Teams, scores, score history and event settings are currently stored in memory.
-
-This means refreshing the application can reset temporary application state.
-
-Backend persistence has not yet been implemented.
-
-Authentication has not yet been implemented.
-
-Real-time communication between separate devices has not yet been implemented.
-
-These limitations will be addressed during the Spring Boot backend phase.
-
----
-
-# Repository
-
-GitHub repository:
-
-`Masego911/Friends-Like-These`
-
-Active rebuild branch:
-
-`react-rebuild`
+The rebuilt application is being developed and tested progressively before replacing the earlier production version.
