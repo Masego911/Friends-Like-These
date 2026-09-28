@@ -1,0 +1,1 @@
+package com.friendslikethese.backend.registration;import java.time.OffsetDateTime;public record PublicRegistrationResponse(boolean registrationOpen,OffsetDateTime registrationDeadline,String registrationFormUrl){}
