@@ -2,21 +2,47 @@
 
 ### Games Night Management & Live Scoring Platform
 
-Friends Like These is a full-stack web application for managing live team-based games nights.
+Friends Like These is a full-stack web application for managing live team-based games nights from registration through to live scoring, round management and historical results.
 
-The platform brings together team registration, game setup, round management, live scoring, leaderboards and event history in one system. Organisers manage the game through a secure administration dashboard while participants and spectators follow the competition through a separate public scoreboard.
+The platform brings together team registration, game setup, round management, live scoring, leaderboards and event history in one system.
+
+Organisers manage the game through a secure administration dashboard while participants and spectators follow the competition through audience-facing scoreboards, including a dedicated Smart TV application.
 
 Friends Like These started as a practical solution for running a CampusKey games night and has since evolved into a reusable full-stack event platform.
 
 ---
 
-## Project Evolution
+## Live Applications
 
-### The Original Friends Like These
+### Main Application
+
+https://friendsliketheseck.netlify.app
+
+Used for the main Friends Like These experience and administration.
+
+### Dedicated Smart TV Scoreboard
+
+https://friendslikethesetv.netlify.app
+
+A separate audience-facing application optimised for displaying the live competition on TVs and large event screens.
+
+### Production Backend
+
+Hosted on Microsoft Azure App Service.
+
+The backend provides the REST API used by both frontend applications and connects to Azure SQL for persistent game data.
+
+---
+
+# Project Evolution
+
+## The Original Friends Like These
 
 Friends Like These was originally developed for a live CampusKey student games night.
 
-The first version focused on solving the immediate operational challenge of running the event. Instead of manually tracking registrations and scores, the application provided a digital scoreboard that organisers could update while participants followed the leaderboard.
+The first version focused on solving the immediate operational challenge of running the event.
+
+Instead of manually tracking registrations and scores, the application provided a digital scoreboard that organisers could update while participants followed the leaderboard.
 
 The original system included:
 
@@ -32,38 +58,50 @@ The original system included:
 
 That version demonstrated the value of the idea during an actual live event.
 
-However, it was primarily a frontend-driven event tool rather than a complete games management system.
+However, it was primarily a frontend-driven event tool rather than a complete games-management system.
 
 ---
 
-## The Rebuild
+# The Rebuild
 
 The current version is a substantial rebuild of the original application.
 
-Instead of developing Friends Like These around one specific event, the application is being redesigned as a reusable **Games Night Management Platform**.
+Instead of developing Friends Like These around one specific event, the application has been redesigned as a reusable **Games Night Management Platform**.
 
-The rebuild introduces a proper full-stack architecture:
+The rebuild introduces a full-stack architecture:
 
 ```text
-React + TypeScript
-        |
-        | REST API
-        v
-Java Spring Boot
-        |
-        v
-Microsoft SQL Server
+                    Google Forms
+                         |
+                         v
+                    Google Sheets
+                         |
+                         v
+                 Google Sheets API
+                         |
+                         v
+                Java Spring Boot
+                         |
+                         v
+                     Azure SQL
+                         |
+                 REST API / HTTPS
+                         |
+              +----------+----------+
+              |                     |
+              v                     v
+     Main React Application   Smart TV Application
 ```
 
-Google Forms and Google Sheets remain part of the registration workflow, but the Spring Boot backend now controls application state, business rules, scoring, events, rounds and persistence.
+Google Forms and Google Sheets remain part of the registration workflow, but the Spring Boot backend controls application state, business rules, scoring, events, rounds, authentication and persistence.
 
-This allows Friends Like These to manage the full lifecycle of a games night rather than only displaying scores.
+This allows Friends Like These to manage the complete lifecycle of a games night rather than only displaying scores.
 
 ---
 
 # What Friends Like These Does
 
-A games night can now move through a structured process:
+A games night follows a structured process:
 
 ```text
 Create Game
@@ -73,6 +111,9 @@ Open Registration
      |
      v
 Teams Register
+     |
+     v
+Google Sheets Sync
      |
      v
 Close Registration
@@ -90,6 +131,9 @@ Live Scoring
 End Round
      |
      v
+Round Result
+     |
+     v
 Next Round
      |
      v
@@ -99,34 +143,17 @@ Complete Game
 Previous Games
 ```
 
-The public scoreboard and administration dashboard use the same backend game state but serve different purposes.
+The administration dashboard and audience displays use the same backend game state but serve different purposes.
 
 The **Admin Dashboard** is designed for the organiser running the event.
 
-The **Public Scoreboard** is designed for the audience watching the game.
+The **Public Scoreboard** is designed for participants and spectators.
+
+The **Smart TV Scoreboard** is a dedicated lightweight display for TVs and large event screens.
 
 ---
 
 # Features
-
-## Public Scoreboard
-
-The public scoreboard provides the audience-facing view of the competition.
-
-It displays:
-
-- Competing teams
-- Current scores
-- Leaderboard positions
-- Current round information
-- Registration information
-- Game status
-
-The scoreboard automatically retrieves current game information from the backend.
-
-It is designed to work across large displays, laptops, tablets and mobile devices.
-
----
 
 ## Admin Dashboard
 
@@ -142,11 +169,11 @@ The dashboard includes:
 - Previous Games
 - Settings
 
-This separates operational controls from the public competition screen.
+This separates operational controls from the audience-facing competition screens.
 
 ---
 
-## Live Scoring
+# Live Scoring
 
 The Live Scoring interface allows organisers to update team scores while the competition is running.
 
@@ -158,58 +185,215 @@ Quick scoring controls include:
 
 Custom score adjustments can also be made when required.
 
-Teams are automatically ranked according to their current scores.
+Teams are ranked according to their current scores.
 
-Every score adjustment is processed by the backend and recorded as score activity.
+Every score adjustment is processed by the backend rather than treating browser state as the permanent source of truth.
+
+Score changes are also recorded as score activity.
+
+The general scoring flow is:
+
+```text
+Admin changes score
+        |
+        v
+React Admin
+        |
+        v
+Spring Boot API
+        |
+        v
+Azure SQL
+        |
+        v
+Updated leaderboard
+        |
+        +------------------+
+        |                  |
+        v                  v
+Main Scoreboard      Smart TV Scoreboard
+```
 
 ---
 
-## Round Management
+# Round Management
 
 Games can contain multiple rounds.
 
-Each round has its own lifecycle:
+Each round has its own lifecycle.
 
 ```text
-PENDING
-   |
-   v
+NOT_STARTED
+     |
+     v
 IN_PROGRESS
-   |
-   v
+     |
+     v
 COMPLETED
 ```
 
-Administrators can start and end rounds directly from the game controls.
+Administrators can start and end rounds from the game controls.
 
-Scoring is only permitted when:
+Scoring is only permitted when the game and round are in the appropriate state.
+
+The backend enforces these rules rather than relying only on disabled frontend controls.
+
+---
+
+# Live Audience Experience
+
+The audience scoreboard responds to the state of the game.
+
+## Between Rounds
+
+The audience sees the cumulative:
 
 ```text
-Game Status = LIVE
-AND
-Round Status = IN_PROGRESS
+OVERALL STANDINGS
 ```
 
-These rules are enforced by the backend rather than relying only on disabled frontend controls.
+## When a Round Starts
+
+Starting a round changes the audience experience to:
+
+```text
+GET READY
+
+ROUND N
+
+ROUND IN PROGRESS
+```
+
+The scoreboard can then display standings for that specific round.
+
+## During a Round
+
+The live scoreboard retrieves updated scores from the backend so changes made through the administration interface appear on the audience display without requiring manual refreshes.
+
+The main scoreboard experience includes live visual behaviour such as score and leaderboard updates.
+
+## When a Round Ends
+
+The audience receives a round-result presentation before returning to the updated cumulative standings.
+
+This keeps the scoreboard aligned with the actual game lifecycle controlled by the organiser.
 
 ---
 
-## Game Progress Controls
+# Dedicated Smart TV Scoreboard
 
-Round controls are also available directly from the Live Scoring interface.
+Friends Like These includes a separate frontend specifically for Smart TVs and large event displays.
 
-This allows the organiser running the game to:
+Production TV application:
 
-- Start the next round
-- Score teams
-- End the current round
-- Continue to the next round
+https://friendslikethesetv.netlify.app
 
-without repeatedly moving between the scoring screen and Game Setup.
+The TV application is intentionally separated from the administration interface.
+
+This means an organiser can operate the game from a laptop, desktop or suitable mobile device while the audience sees only the scoreboard.
+
+```text
+ORGANISER
+
+Admin Laptop / Device
+        |
+        v
+Azure API
+        |
+        v
+Azure SQL
+        |
+        v
+Smart TV
+        |
+        v
+AUDIENCE
+```
+
+## TV Features
+
+The dedicated TV application provides:
+
+- Friends Like These branding
+- Live leaderboard
+- Team rankings
+- Team scores
+- Overall standings
+- Round-specific standings
+- Current round information
+- Round-start presentation
+- Round-winner presentation
+- Registration countdown
+- Registration QR code
+- Live connection status
+- Automatic score refresh
+- Reconnection state
+
+The TV application contains no administrative controls.
 
 ---
 
-## Team Management
+# Smart TV Compatibility
+
+Smart TVs can use browser engines that are considerably older than modern desktop browsers.
+
+For that reason, the TV application is maintained as an independent Vite application.
+
+Its production build uses:
+
+```text
+@vitejs/plugin-legacy
+```
+
+to generate legacy JavaScript bundles and browser polyfills in addition to the normal modern production bundle.
+
+The production build therefore contains both modern and legacy-compatible assets.
+
+The TV application also uses a Netlify API proxy:
+
+```text
+TV Browser
+     |
+     v
+Netlify /api/*
+     |
+     v
+Azure Spring Boot API
+```
+
+This allows the TV application to make same-origin `/api` requests while Netlify forwards those requests to the production backend.
+
+The architecture also allows TV compatibility improvements to be made without risking the administration application.
+
+---
+
+# Registration Countdown & QR Code
+
+While registration is open, the Smart TV scoreboard can display a live countdown to the registration deadline.
+
+The display also contains a QR code linking participants directly to the Friends Like These registration form.
+
+This means participants at the venue can scan the event screen using their phones and register their team.
+
+```text
+Smart TV
+   |
+   v
+QR Code
+   |
+   v
+Google Form
+   |
+   v
+Google Sheets
+   |
+   v
+Friends Like These
+```
+
+---
+
+# Team Management
 
 The system supports management of teams participating in the current game.
 
@@ -232,7 +416,7 @@ Friends Like These integrates with Google Forms and Google Sheets for participan
 
 Participants register through a Google Form.
 
-Their responses are stored in a private Google Sheet and synchronised with the Friends Like These backend.
+Responses are stored in a private Google Sheet and synchronised with the Friends Like These backend.
 
 ```text
 Google Form
@@ -247,7 +431,7 @@ Google Sheets API
 Spring Boot
      |
      v
-SQL Server
+Azure SQL
      |
      v
 React
@@ -262,9 +446,11 @@ The registration system supports:
 - Conflict detection
 - Team-member importing
 - Registration status monitoring
-- Protection against simultaneous sync operations
+- Protection against simultaneous synchronisation operations
 
-Google Sheets is used as the registration source rather than as the application's primary database.
+Google Sheets acts as the registration source rather than as the application's primary database.
+
+The production application securely supplies Google API credentials through server-side environment configuration rather than exposing credentials to the browser or repository.
 
 ---
 
@@ -314,20 +500,30 @@ The Previous Games area provides access to historical information including:
 
 This allows Friends Like These to build an event history over time.
 
+Historical data is presented separately from the current event so previous results do not interfere with an active games night.
+
 ---
 
 # Authentication & Security
 
-Administrative functionality is protected through the Spring Boot security layer.
+Administrative functionality is protected through Spring Security.
 
 The application includes:
 
 - Administrator authentication
-- Protected admin endpoints
+- Protected administrative endpoints
 - Password hashing
 - Login throttling
 - Session-based authentication
 - Role-based backend security
+- CSRF protection
+- Production cookie configuration
+- CORS configuration
+- Public read-only scoreboard endpoints
+
+Audience-facing leaderboard requests do not require administrator authentication.
+
+Operations that modify scores, teams, registration state or game state remain protected.
 
 Sensitive credentials are not stored directly in the repository.
 
@@ -335,66 +531,69 @@ Sensitive credentials are not stored directly in the repository.
 
 # Score Integrity & Concurrency
 
-Friends Like These is designed for a live environment where several operations can happen at almost the same time.
+Friends Like These is designed for a live environment where several operations can occur almost simultaneously.
 
 The backend therefore includes concurrency protection for critical operations.
 
-Score changes update the team score and create the associated score activity within the same transactional operation.
+Score changes update the relevant score and create associated score activity transactionally.
 
-Database locking is used when updating scores to reduce the possibility of conflicting updates.
+Database locking is used during important scoring operations to reduce the possibility of conflicting updates.
 
-Event lifecycle changes also use locking and database constraints to protect the current game state.
+Event lifecycle mutations also use locking and database constraints to protect current game state.
 
 Registration synchronisation uses a bounded background executor and prevents multiple synchronisation jobs from processing the same registration source simultaneously.
 
 ---
 
-# Architecture
+# Production Architecture
 
 ```text
-                     PARTICIPANTS
-                           |
-                           v
-                     Google Form
-                           |
-                           v
-                     Google Sheets
-                           |
-                           v
-                   Google Sheets API
-                           |
-                           v
-              +--------------------------+
-              |   SPRING BOOT BACKEND    |
-              |--------------------------|
-              | Authentication           |
-              | Event Management         |
-              | Registration             |
-              | Team Management          |
-              | Round Engine             |
-              | Scoring                  |
-              | Score Activity           |
-              | Previous Games           |
-              +------------+-------------+
-                           |
-                           v
-                      SQL Server
-                           ^
-                           |
-                        REST API
-                           |
-                 +---------+---------+
-                 |                   |
-                 v                   v
-          Admin Dashboard      Public Scoreboard
-                 \                   /
-                  \                 /
-                   +--- React -----+
+                         PARTICIPANTS
+                              |
+                              v
+                         Google Form
+                              |
+                              v
+                         Google Sheets
+                              |
+                              v
+                       Google Sheets API
+                              |
+                              v
+                +---------------------------+
+                |    SPRING BOOT BACKEND    |
+                |---------------------------|
+                | Authentication            |
+                | Event Management          |
+                | Registration              |
+                | Team Management           |
+                | Round Engine              |
+                | Scoring                   |
+                | Score Activity            |
+                | Previous Games            |
+                +-------------+-------------+
+                              |
+                              v
+                          Azure SQL
+                              ^
+                              |
+                         REST API
+                              |
+              +---------------+---------------+
+              |                               |
+              v                               v
+       Main React App                  Smart TV App
+              |                               |
+              v                               v
+          Netlify                         Netlify
+              |                               |
+              v                               v
+      Organiser / Users                    Audience
 ```
 
 The Spring Boot backend is the authoritative source for game state and business rules.
 
-The React frontend consumes the backend REST API and presents that state through the admin and public interfaces.
+Both frontend applications consume the same backend data.
 
 ---
 
@@ -402,49 +601,74 @@ The React frontend consumes the backend REST API and presents that state through
 
 | Area | Technology |
 |---|---|
-| Frontend | React |
+| Main Frontend | React |
+| TV Frontend | React |
 | Frontend Language | TypeScript |
 | Build Tool | Vite |
+| TV Compatibility | Vite Legacy Plugin |
 | Backend | Spring Boot |
 | Backend Language | Java 21 |
-| Database | Microsoft SQL Server |
+| Database | Microsoft SQL Server / Azure SQL |
 | Persistence | Spring Data JPA / Hibernate |
 | Security | Spring Security |
+| Registration | Google Forms |
 | Registration Integration | Google Sheets API |
+| Database Migrations | Flyway |
 | Backend Build | Gradle |
 | API | REST |
+| Frontend Hosting | Netlify |
+| Backend Hosting | Microsoft Azure App Service |
+| Production Database | Azure SQL |
 | Version Control | Git & GitHub |
 
 ---
 
 # Repository Structure
 
-Friends Like These is maintained as **one full-stack repository**.
+Friends Like These is maintained as one full-stack project.
 
 ```text
 Friends-Like-These/
-│
-├── src/                     # React frontend
-├── public/                  # Frontend assets
-│
-├── backend/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   │   └── test/
-│   │
-│   ├── gradle/
-│   ├── build.gradle
-│   ├── gradlew
-│   └── gradlew.bat
-│
-├── package.json
-├── vite.config.ts
-└── README.md
+|
+|-- src/                         # Main React application
+|   |-- admin/
+|   |-- api/
+|   |-- components/
+|   |-- models/
+|   `-- ...
+|
+|-- public/
+|
+|-- tv/                          # Dedicated Smart TV application
+|   |-- src/
+|   |   |-- App.tsx
+|   |   |-- Countdown.tsx
+|   |   |-- RegistrationQR.tsx
+|   |   `-- ...
+|   |
+|   |-- public/
+|   |-- package.json
+|   |-- vite.config.ts
+|   `-- netlify.toml
+|
+|-- backend/                     # Spring Boot backend
+|   |-- src/
+|   |   |-- main/
+|   |   |   |-- java/
+|   |   |   `-- resources/
+|   |   `-- test/
+|   |
+|   |-- gradle/
+|   |-- build.gradle
+|   |-- gradlew
+|   `-- gradlew.bat
+|
+|-- package.json
+|-- vite.config.ts
+`-- README.md
 ```
 
-The frontend remains at the repository root while the Spring Boot application is contained in `/backend`.
+The dedicated TV application can therefore evolve independently while continuing to use the same backend and game data.
 
 ---
 
@@ -463,27 +687,75 @@ score/
 team/
 ```
 
-This separates authentication, events, registration, scoring and team-management responsibilities instead of placing the application's business logic directly inside controllers.
+This separates authentication, events, registration, scoring and team-management responsibilities rather than placing application business logic directly inside controllers.
 
 ---
 
-# Running the Project Locally
+# Data Flow
+
+A central design principle of the rebuild is that the browser is not the permanent source of truth.
+
+For scoring:
+
+```text
+User Action
+     |
+     v
+React
+     |
+     v
+REST API
+     |
+     v
+Spring Boot
+     |
+     v
+Azure SQL
+     |
+     v
+API Response
+     |
+     v
+Updated Interface
+```
+
+For registration:
+
+```text
+Participant
+     |
+     v
+Google Form
+     |
+     v
+Google Sheets
+     |
+     v
+Registration Sync
+     |
+     v
+Spring Boot
+     |
+     v
+Azure SQL
+     |
+     v
+Admin / Game
+```
+
+This architecture separates presentation from persistent application state.
+
+---
+
+# Running the Main Frontend Locally
 
 ## Requirements
 
-You will need:
+Install:
 
 - Node.js
 - npm
-- Java 21
-- Microsoft SQL Server
 - Git
-
-Google Cloud credentials are additionally required when using the live Google Sheets registration integration.
-
----
-
-## Run the Frontend
 
 From the repository root:
 
@@ -492,13 +764,13 @@ npm install
 npm run dev
 ```
 
-The development frontend runs on:
+The development frontend normally runs on:
 
 ```text
 http://localhost:5173
 ```
 
-The backend API location can be configured using:
+The backend API can be configured using:
 
 ```text
 VITE_API_BASE_URL=http://localhost:8080
@@ -506,16 +778,41 @@ VITE_API_BASE_URL=http://localhost:8080
 
 ---
 
-## Run the Backend
+# Running the TV Application Locally
 
 From the repository root:
 
 ```powershell
-cd backend
+cd tv
+npm install
+npm run dev
+```
+
+Create a production TV build using:
+
+```powershell
+npm run build
+```
+
+The production build generates both modern and legacy browser assets.
+
+---
+
+# Running the Backend
+
+Requirements include:
+
+- Java 21
+- Gradle wrapper
+- Microsoft SQL Server for local development
+
+From the backend project:
+
+```powershell
 .\gradlew.bat bootRun
 ```
 
-The backend runs on:
+The local backend normally runs on:
 
 ```text
 http://localhost:8080
@@ -523,13 +820,27 @@ http://localhost:8080
 
 A configured SQL Server database must be available to the backend.
 
+Google Cloud credentials are additionally required when using the Google Sheets registration integration locally.
+
+---
+
+# Database Migrations
+
+Production database schema management uses Flyway.
+
+Database migrations are stored under the backend resources and applied by the production application.
+
+Production uses schema validation rather than relying on Hibernate to silently generate or modify the database structure.
+
+This makes database changes explicit and reproducible.
+
 ---
 
 # Testing
 
-The backend includes automated tests covering the application's important business behaviour.
+The backend includes automated tests covering important application behaviour.
 
-Current test coverage includes:
+Test coverage includes areas such as:
 
 - Application startup
 - Authentication and security
@@ -544,7 +855,7 @@ Current test coverage includes:
 - Score adjustments
 - Score activity reset
 
-Run the backend test suite from `/backend`:
+Run the backend test suite with:
 
 ```powershell
 .\gradlew.bat test
@@ -556,43 +867,90 @@ The frontend production build can be validated using:
 npm run build
 ```
 
+The dedicated TV production build can be validated from `/tv` using:
+
+```powershell
+npm run build
+```
+
 ---
 
-# Currently in Development
+# Deployment
 
-The next major development area is the public live-scoreboard experience.
+Friends Like These currently uses separate deployments for its major components.
 
-During an active round, the public scoreboard is planned to automatically transition from the overall leaderboard to the standings for that specific round.
+## Main Frontend
 
-When the administrator ends the round, the audience display will transition back to the updated overall standings.
+Netlify:
 
-Planned improvements include:
+https://friendsliketheseck.netlify.app
 
-- Round-specific live standings
-- Automatic Overall → Round transitions
-- Round Complete transitions
-- Animated score changes
-- Smooth leaderboard position changes
-- Branded transition effects
-- Reduced-motion accessibility support
+## Smart TV Frontend
 
-These features are part of the current development plan and are not yet documented as completed functionality.
+Netlify:
+
+https://friendslikethesetv.netlify.app
+
+## Backend
+
+Microsoft Azure App Service.
+
+## Database
+
+Azure SQL Database in South Africa North.
+
+This separation allows each presentation layer to be optimised for its purpose while maintaining a single authoritative backend.
+
+---
+
+# Current Development Status
+
+Friends Like These has progressed beyond the original frontend-only scoreboard.
+
+Implemented areas now include:
+
+- Full-stack React and Spring Boot architecture
+- SQL persistence
+- Azure SQL production database
+- Azure-hosted backend
+- Netlify frontend deployment
+- Administrator authentication
+- Protected administrative endpoints
+- Event lifecycle management
+- Round management
+- Live scoring
+- Score activity
+- Team management
+- Google Forms registration workflow
+- Google Sheets registration integration
+- Registration synchronisation architecture
+- Previous Games
+- Public leaderboard endpoints
+- Round-aware audience experience
+- Dedicated Smart TV application
+- Registration QR code
+- Registration countdown
+- Smart TV legacy-browser build
+- Separate Smart TV production deployment
+- Database migrations with Flyway
+- Concurrency protection for critical operations
+- Automated backend testing
 
 ---
 
 # Roadmap
 
-The broader development roadmap includes:
+The next development areas include:
 
-- Public scoreboard round experience
-- Expanded automated testing
+- Continued Smart TV compatibility testing
+- Additional automated frontend testing
 - GitHub Actions continuous integration
-- Database migration management
-- Production backend deployment
-- Azure SQL
 - Continuous deployment
-- Monitoring and health checks
+- Production monitoring and health checks
+- Improved operational logging
 - Event analytics dashboard
+- Game and participation analytics
+- Continued accessibility improvements
 
 ---
 
@@ -604,9 +962,9 @@ Running a live games night means managing registrations, participants, teams, ro
 
 The original application solved the immediate scoring and leaderboard problem.
 
-The rebuild takes that experience further by treating the games night as a complete event lifecycle — from registration to live competition and finally historical results.
+The rebuild takes that experience further by treating the games night as a complete event lifecycle — from registration to live competition and historical results.
 
-The project has also become an opportunity to apply software-engineering concepts to a system that has a real use case, including:
+The project has also become an opportunity to apply software-engineering concepts to a system with a real use case, including:
 
 - Full-stack application architecture
 - REST API design
@@ -615,12 +973,16 @@ The project has also become an opportunity to apply software-engineering concept
 - External API integration
 - Transaction management
 - Concurrency
+- Database migrations
+- Cloud deployment
 - Automated testing
 - Responsive interface design
+- Legacy-browser compatibility
+- Separation of administrative and audience experiences
 
 ---
 
-## Project Status
+# Project Status
 
 **Active development**
 
@@ -630,4 +992,6 @@ The current full-stack rebuild is maintained on:
 react-rebuild
 ```
 
-The rebuilt application is being developed and tested progressively before replacing the earlier production version.
+The project now has a deployed main application, production backend, Azure SQL database and dedicated Smart TV scoreboard.
+
+Further development is focused on reliability, testing, deployment automation, monitoring and analytics while continuing to improve the live games-night experience.
