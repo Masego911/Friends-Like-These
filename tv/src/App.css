@@ -1,0 +1,318 @@
+﻿* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: #f5f7fa;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.tv {
+  min-height: 100vh;
+  padding: 3vh 5vw;
+  color: #0b1f3a;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3vh;
+}
+
+.live {
+  color: #ef3340;
+  font-size: clamp(14px, 1.2vw, 22px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: #ef3340;
+  animation: pulse 1.2s infinite;
+}
+
+h1 {
+  margin: 1vh 0;
+  font-size: clamp(52px, 7vw, 120px);
+  line-height: 0.95;
+  font-weight: 900;
+}
+
+.colour-bar {
+  display: flex;
+  height: 12px;
+  width: 100%;
+}
+
+.header-bar {
+  max-width: 620px;
+  margin: 2vh auto;
+}
+
+.colour-bar i {
+  flex: 1;
+}
+
+.colour-bar i:nth-child(1) { background: #f59e0b; }
+.colour-bar i:nth-child(2) { background: #ef3340; }
+.colour-bar i:nth-child(3) { background: #4f46a5; }
+.colour-bar i:nth-child(4) { background: #2589c9; }
+.colour-bar i:nth-child(5) { background: #10a8a5; }
+
+.edition {
+  color: #52657a;
+  font-size: clamp(15px, 1.5vw, 25px);
+  letter-spacing: 0.32em;
+  font-weight: 700;
+}
+
+.round-label {
+  margin-top: 1.4vh;
+  color: #52657a;
+  font-size: clamp(18px, 1.6vw, 30px);
+  font-weight: 900;
+}
+
+.leaderboard {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  min-height: 9vh;
+  margin-bottom: 1.2vh;
+  padding: 1.4vh 2vw;
+  background: #ffffff;
+  border-left: 10px solid #2589c9;
+  box-shadow: 0 7px 22px rgba(11,31,58,.10);
+  animation: enter .35s ease-out;
+}
+
+.team--first {
+  border-left-color: #f59e0b;
+  box-shadow: 0 8px 28px rgba(245,158,11,.22);
+}
+
+.rank {
+  width: 7vw;
+  min-width: 75px;
+  font-size: clamp(34px, 4vw, 70px);
+  font-weight: 900;
+  color: #52657a;
+}
+
+.team--first .rank {
+  color: #f59e0b;
+}
+
+.team-name {
+  flex: 1;
+  padding: 0 2vw;
+  font-size: clamp(30px, 3.5vw, 65px);
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  min-width: 13vw;
+  text-align: right;
+}
+
+.score strong {
+  display: block;
+  color: #10a8a5;
+  font-size: clamp(40px, 5vw, 85px);
+  line-height: .9;
+}
+
+.score span {
+  color: #52657a;
+  font-size: clamp(13px, 1vw, 20px);
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.waiting {
+  padding: 12vh 2vw;
+  text-align: center;
+  font-size: clamp(30px, 4vw, 65px);
+  font-weight: 800;
+  color: #52657a;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1500px;
+  margin: 2vh auto 0;
+  color: #52657a;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #0b1f3a;
+  color: white;
+  animation: transitionIn .35s ease-out;
+}
+
+.brand {
+  color: rgba(255,255,255,.72);
+  font-weight: 900;
+  letter-spacing: .28em;
+  font-size: clamp(16px, 1.5vw, 26px);
+  margin-bottom: 3vh;
+}
+
+.transition-small {
+  font-size: clamp(20px, 2vw, 36px);
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.transition-big {
+  font-size: clamp(90px, 14vw, 230px);
+  line-height: 1;
+  font-weight: 900;
+  animation: pop .65s ease-out;
+}
+
+.transition-status {
+  margin-top: 2vh;
+  color: #10a8a5;
+  font-size: clamp(24px, 3vw, 50px);
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.winner-label {
+  color: #f59e0b;
+}
+
+.winner-name {
+  max-width: 90vw;
+  margin-top: 1vh;
+  font-size: clamp(70px, 10vw, 180px);
+  line-height: .95;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+  animation: pop .7s ease-out;
+}
+
+.winner-score {
+  margin-top: 2vh;
+  color: #10a8a5;
+  font-size: clamp(30px, 4vw, 70px);
+  font-weight: 900;
+}
+
+.trophy {
+  margin: 1vh 0;
+  color: #f59e0b;
+  font-size: clamp(90px, 11vw, 180px);
+  animation: pop .7s ease-out;
+}
+
+.transition > .colour-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+@keyframes pulse {
+  50% { opacity: .3; transform: scale(.75); }
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes transitionIn {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pop {
+  0% { opacity: 0; transform: scale(.65); }
+  70% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-height: 700px) {
+  .tv { padding-top: 2vh; padding-bottom: 2vh; }
+  header { margin-bottom: 2vh; }
+  .team { min-height: 8vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+  }
+}
+
+/* TV registration information */
+.tv-registration {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 24px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 28px auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.tv-registration .countdown,
+.tv-registration .registration-qr {
+  flex: 1;
+}
+
+.tv-registration .registration-qr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.tv-registration .registration-qr__image {
+  width: 150px;
+  height: 150px;
+}
+
+@media (max-width: 800px) {
+  .tv-registration {
+    gap: 12px;
+  }
+
+  .tv-registration .registration-qr__image {
+    width: 120px;
+    height: 120px;
+  }
+}

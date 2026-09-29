@@ -22,14 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Local Netlify folder
-.netlify
-
-# Environment
-.env.production
-
-# TV build
-tv/dist/
-tv/node_modules/
-tv/.netlify/

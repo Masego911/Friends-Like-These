@@ -596,3 +596,79 @@ backend/README.md
 ```
 
 See the root `README.md` for the overall project and `/backend/README.md` for backend architecture, security, persistence, concurrency and API behaviour.
+
+---
+
+# Dedicated Smart TV Scoreboard
+
+Friends Like These includes a dedicated audience-facing Smart TV scoreboard for live games nights.
+
+## Live Applications
+
+- Main application and administration: https://friendsliketheseck.netlify.app
+- Smart TV scoreboard: https://friendslikethesetv.netlify.app
+- Backend: Spring Boot API hosted on Microsoft Azure
+- Database: Azure SQL
+
+## TV Scoreboard
+
+The TV application is separate from the administration interface. Organisers can manage the game from a computer or mobile device while the audience scoreboard runs independently on a Smart TV or large display.
+
+Architecture:
+
+Admin / Main Application
+        |
+        v
+Spring Boot API
+        |
+        v
+Azure SQL
+        |
+        v
+Dedicated TV Scoreboard
+
+The TV scoreboard provides:
+
+- Live team standings
+- Automatic score updates
+- Overall standings
+- Round-specific standings
+- Current round information
+- Round-start presentation
+- Round-winner presentation
+- Registration countdown
+- Registration QR code
+- Friends Like These branding
+- Connection and reconnection states
+
+The TV contains no administrative controls.
+
+## Smart TV Compatibility
+
+The dedicated TV frontend is maintained under the `/tv` directory as a separate React, TypeScript and Vite application.
+
+Its production build includes legacy JavaScript output and browser polyfills using `@vitejs/plugin-legacy` to improve compatibility with older Smart TV browser engines.
+
+The TV deployment uses a Netlify API proxy to communicate with the Azure-hosted backend while keeping the browser requests same-origin.
+
+## TV Deployment
+
+The dedicated production scoreboard is deployed separately from the main application:
+
+https://friendslikethesetv.netlify.app
+
+This separation allows the TV experience to be optimised for large displays and Smart TV compatibility without affecting the administration interface.
+
+## TV Project Structure
+
+Friends-Like-These/
+|
+|-- src/                 Main React application
+|-- tv/                  Dedicated Smart TV application
+|   |-- src/
+|   |-- package.json
+|   |-- vite.config.ts
+|   `-- netlify.toml
+|
+`-- backend/             Spring Boot backend
+
