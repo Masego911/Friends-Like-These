@@ -1,5 +1,74 @@
-const API_BASE_URL=(import.meta.env.VITE_API_BASE_URL??"http://localhost:8080").replace(/\/$/,"");let csrfToken:string|null=null;
-export class ApiError extends Error{readonly status:number;constructor(message:string,status:number){super(message);this.name="ApiError";this.status=status}}
-async function csrf(){if(csrfToken)return csrfToken;const r=await fetch(`${API_BASE_URL}/api/auth/csrf`,{credentials:"include"});if(!r.ok)throw new Error("Unable to establish a secure session.");csrfToken=(await r.json()).token;return csrfToken!}
-export async function request<T>(path:string,options:RequestInit={}):Promise<T>{const method=(options.method??"GET").toUpperCase(),headers:Record<string,string>={"Content-Type":"application/json",...(options.headers as Record<string,string>??{})};if(!["GET","HEAD","OPTIONS"].includes(method))headers["X-XSRF-TOKEN"]=await csrf();const response=await fetch(`${API_BASE_URL}${path}`,{...options,credentials:"include",headers});if(!response.ok){const body=await response.json().catch(()=>null);throw new ApiError(body?.message??(response.status===401?"Authentication required.":`Request failed (${response.status})`),response.status)}if(response.status===204)return undefined as T;return response.json() as Promise<T>}
-export function clearSecurityState(){csrfToken=null}
+﻿const API_BASE_URL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")
+  : "";
+
+let csrfToken: string | null = null;
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+async function csrf() {
+  if (csrfToken) return csrfToken;
+
+  const response = await fetch(`${API_BASE_URL}/api/auth/csrf`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to establish a secure session.");
+  }
+
+  csrfToken = (await response.json()).token;
+  return csrfToken!;
+}
+
+export async function request<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    headers["X-XSRF-TOKEN"] = await csrf();
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+
+    throw new ApiError(
+      body?.message ??
+        (response.status === 401
+          ? "Authentication required."
+          : `Request failed (${response.status})`),
+      response.status
+    );
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export function clearSecurityState() {
+  csrfToken = null;
+}

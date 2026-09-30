@@ -1,1 +1,149 @@
 .registration-management{margin:0 0 1.5rem;padding:1.5rem;background:#fff;border:1px solid #dbe4ee;border-radius:16px;box-shadow:0 8px 24px rgba(11,31,58,.06)}.registration-management__heading{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}.registration-management__heading span{color:#00aeb5;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.registration-management h2{margin:.25rem 0;color:#0b1f3a}.registration-management__badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.registration-management__badges b{padding:.4rem .65rem;border-radius:999px;font-size:.7rem;background:#fee2e2;color:#991b1b}.registration-management__badges b.ok{background:#dcfce7;color:#166534}.registration-management__timing,.registration-management__metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;margin:1rem 0}.registration-management__timing div,.registration-management__metrics div{padding:.8rem;background:#f8fafc;border-radius:10px}.registration-management dt,.registration-management__metrics span{color:#64748b;font-size:.72rem;font-weight:700}.registration-management dd{margin:.3rem 0 0;color:#0b1f3a;font-size:.85rem;font-weight:700}.registration-management__metrics strong{display:block;margin-top:.2rem;color:#0b1f3a;font-size:1.35rem}.registration-management__message{color:#475569}.registration-management__actions{display:flex;flex-wrap:wrap;gap:.65rem}.registration-management__actions button,.registration-management__actions a{padding:.65rem .85rem;border:1px solid #00aeb5;border-radius:8px;background:#fff;color:#087d83;font:inherit;font-size:.8rem;font-weight:800;text-decoration:none;cursor:pointer}.registration-management__preview{margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0}.registration-management__preview h3{margin:0;color:#0b1f3a}.registration-management__preview ul{padding:0;list-style:none}.registration-management__preview li{display:grid;grid-template-columns:1fr 2fr auto;gap:1rem;padding:.65rem 0;border-bottom:1px solid #edf2f7}.registration-management__preview li span,.registration-management__preview li em{color:#64748b;font-size:.8rem}.registration-management__preview li em{text-transform:capitalize}@media(max-width:700px){.registration-management__heading{display:block}.registration-management__badges{justify-content:flex-start;margin-top:.75rem}.registration-management__preview li{grid-template-columns:1fr}}@media(max-width:680px){.registration-management{width:100%;margin:0;padding:1rem;border-radius:8px;overflow:hidden}.registration-management__heading>*{min-width:0}.registration-management__badges{display:grid;grid-template-columns:1fr}.registration-management__badges b{width:100%;border-radius:6px;overflow-wrap:anywhere}.registration-management__timing,.registration-management__metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.registration-management__timing div,.registration-management__metrics div{min-width:0;padding:.7rem}.registration-management dd,.registration-management__message,.registration-management__preview *{overflow-wrap:anywhere;word-break:break-word}.registration-management__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.registration-management__actions button,.registration-management__actions a{display:grid;place-items:center;min-width:0;min-height:46px;text-align:center;white-space:normal}.registration-management__preview li{gap:.35rem}}@media(max-width:359px){.registration-management__timing,.registration-management__metrics,.registration-management__actions{grid-template-columns:1fr}}
+
+/* =========================================================
+   MOBILE REGISTRATION MANAGEMENT
+   ========================================================= */
+
+@media (max-width: 680px) {
+
+  .registration-management {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 1rem;
+    padding: 1rem;
+    overflow: visible;
+  }
+
+  .registration-management__heading {
+    display: block;
+    width: 100%;
+  }
+
+  .registration-management h2 {
+    font-size: 1.65rem;
+    line-height: 1.15;
+  }
+
+  .registration-management__badges {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+    width: 100%;
+    margin-top: .85rem;
+  }
+
+  .registration-management__badges b {
+    box-sizing: border-box;
+    width: 100%;
+    padding: .65rem .75rem;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  /* Dates and sync information */
+
+  .registration-management__timing {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .6rem;
+    width: 100%;
+    margin: 1rem 0;
+  }
+
+  .registration-management__timing div {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: .85rem;
+  }
+
+  .registration-management__timing dt {
+    margin-bottom: .3rem;
+  }
+
+  .registration-management__timing dd {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.4;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  /* Registration statistics */
+
+  .registration-management__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+    width: 100%;
+  }
+
+  .registration-management__metrics div {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: .85rem;
+  }
+
+  .registration-management__metrics span {
+    display: block;
+    line-height: 1.35;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  .registration-management__metrics strong {
+    margin-top: .35rem;
+    font-size: 1.5rem;
+  }
+
+  /* Controls */
+
+  .registration-management__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .6rem;
+    width: 100%;
+  }
+
+  .registration-management__actions button,
+  .registration-management__actions a {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    padding: .75rem 1rem;
+    place-items: center;
+    text-align: center;
+    font-size: .9rem;
+  }
+
+  .registration-management__message {
+    line-height: 1.5;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  /* Registration preview */
+
+  .registration-management__preview {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .registration-management__preview li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .25rem;
+  }
+
+  .registration-management__preview li * {
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+}
+
+@media (max-width: 380px) {
+  .registration-management__metrics {
+    grid-template-columns: 1fr;
+  }
+}

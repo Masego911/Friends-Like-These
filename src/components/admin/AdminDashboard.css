@@ -37,3 +37,171 @@
 @media(max-width:359px){.team-scoring-row__main{grid-template-columns:36px minmax(0,1fr) 62px;padding-inline:.45rem}.team-scoring-row__quick button{font-size:.7rem}.team-scoring-row__score strong{font-size:1.5rem}}
 .game-progress-bar__actions{display:flex;justify-content:flex-end;gap:.55rem}.game-progress-bar__control button.game-progress-bar__complete{border:1px solid #efb8be;background:#fff1f2;color:var(--flt-danger)}.game-progress-bar__control button.game-progress-bar__complete:disabled{border-color:#e2d7d9;background:#f6f2f3;color:#8b7478}.game-progress-bar__completion-note{display:block;margin-top:.45rem;color:var(--flt-danger);font-size:.72rem;text-align:right}
 @media(max-width:680px){.game-progress-bar__actions{width:100%;flex-direction:column}.game-progress-bar__completion-note{text-align:left}}
+
+/* =========================================================
+   MOBILE ADMIN LAYOUT
+   ========================================================= */
+
+@media (max-width: 680px) {
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .admin-console {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-console__main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    margin: 0;
+  }
+
+  /* Mobile header */
+
+  .game-context {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: .75rem;
+  }
+
+  .game-context__menu {
+    margin: 0;
+  }
+
+  .game-context__mobile-brand {
+    min-width: 0;
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .game-context > div:first-of-type {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .game-context h1 {
+    max-width: 100%;
+    font-size: 1.7rem;
+    line-height: 1.08;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  /*
+   * Status information becomes a readable stacked strip.
+   * Do not squeeze long status values into 1/3 of the phone.
+   */
+  .game-context dl {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+    width: 100%;
+    margin: .25rem 0 0;
+  }
+
+  .game-context dl div {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(90px, auto) 1fr;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+    padding: .7rem .85rem;
+  }
+
+  .game-context dt {
+    margin: 0;
+    font-size: .68rem;
+    white-space: nowrap;
+  }
+
+  .game-context dd {
+    min-width: 0;
+    margin: 0;
+    font-size: .9rem;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  /* Main game card */
+
+  .game-hero {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .game-hero__content {
+    min-width: 0;
+    padding: 1.25rem;
+  }
+
+  .game-hero h2 {
+    font-size: clamp(2rem, 11vw, 3rem);
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .game-hero__content > div:last-child {
+    grid-template-columns: 1fr;
+  }
+
+  .game-hero button {
+    width: 100%;
+  }
+
+  /* Dashboard sections */
+
+  .workflow-grid,
+  .overview-grid,
+  .setup-grid,
+  .score-card-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .workflow-section,
+  .overview-card,
+  .settings-card,
+  .team-score-card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Never split ordinary words character-by-character */
+
+  .admin-console h1,
+  .admin-console h2,
+  .admin-console h3,
+  .admin-console p,
+  .admin-console strong,
+  .admin-console span,
+  .admin-console dd,
+  .admin-console dt {
+    word-break: normal;
+  }
+}

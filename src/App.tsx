@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 
 import "./styles/App.css";
 
@@ -181,6 +181,7 @@ export default function App() {
     const scoreMutationEpoch = useRef(0);
     const displayedEventId = useRef<string | null>(null);
     const publicLoadEpoch = useRef(0);
+    const publicLoadInFlight = useRef(false);
 
     /*
      * ---------------------------------------------------------
@@ -189,6 +190,11 @@ export default function App() {
      */
 
     const loadPublicData = useCallback(async () => {
+        if (publicLoadInFlight.current) {
+            return;
+        }
+
+        publicLoadInFlight.current = true;
         const loadEpoch = ++publicLoadEpoch.current;
 
         try {
@@ -331,6 +337,10 @@ export default function App() {
             setError(
                 "Public scoreboard is temporarily unavailable."
             );
+
+        } finally {
+
+            publicLoadInFlight.current = false;
         }
 
     }, []);
@@ -930,7 +940,7 @@ export default function App() {
             return (
 
                 <p className="verification-screen">
-                    Checking administrator session…
+                    Checking administrator sessionâ€¦
                 </p>
 
             );
@@ -1250,3 +1260,6 @@ export default function App() {
         </>
     );
 }
+
+
+

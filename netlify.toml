@@ -1,0 +1,10 @@
+﻿[[redirects]]
+  from = "/api/*"
+  to = "https://friends-like-these-api-e4ftgjdgftaqc7cr.southafricanorth-01.azurewebsites.net/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
