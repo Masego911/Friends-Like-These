@@ -17,6 +17,7 @@ import type { AdminSession } from "./api/authApi";
 
 import AppHeader from "./components/layout/AppHeader";
 import Scoreboard from "./components/scoreboard/Scoreboard";
+import LandingPage from "./components/landing/LandingPage";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminLogin from "./components/admin/AdminLogin";
 import DeleteTeamDialog from "./components/admin/DeleteTeamDialog";
@@ -107,6 +108,9 @@ export default function App() {
 
     const [view, setView] =
         useState<View>("scoreboard");
+
+    const [publicScreen, setPublicScreen] =
+        useState<"landing" | "scoreboard">("landing");
 
     const [session, setSession] =
         useState<AdminSession | null>(null);
@@ -878,6 +882,24 @@ export default function App() {
      * ---------------------------------------------------------
      */
 
+    useEffect(() => {
+        if (view !== "scoreboard") {
+            return;
+        }
+
+        const timer = window.setInterval(() => {
+            setPublicScreen(current =>
+                current === "landing"
+                    ? "scoreboard"
+                    : "landing"
+            );
+        }, 7_000);
+
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, [view]);
+
     const renderContent = () => {
 
         /*
@@ -893,38 +915,25 @@ export default function App() {
 
             return (
 
-                <Scoreboard
-                    teams={
-                        leaderboard
-                    }
-                    registrationDeadline={
-                        registrationDeadline
-                    }
-                    rounds={
-                        rounds
-                    }
-                    roundStandings={
-                        roundStandings
-                    }
-                    registrationFormUrl={
-                        registrationFormUrl
-                    }
+                <>
+                    {publicScreen === "landing" && (
+                    <LandingPage
+                        registrationDeadline={registrationDeadline}
+                        registrationFormUrl={registrationFormUrl}
+                    />
+                    )}
 
-                    /*
-                     * The public scoreboard now receives the
-                     * real event lifecycle state.
-                     *
-                     * This will allow it to distinguish:
-                     *
-                     * End Round
-                     *      from
-                     * Complete Game.
-                     */
-                    eventStatus={
-                        scoreboardEvent?.status ??
-                        null
-                    }
-                />
+                    {publicScreen === "scoreboard" && (
+                        <Scoreboard
+                            teams={leaderboard}
+                            registrationDeadline={registrationDeadline}
+                            rounds={rounds}
+                            roundStandings={roundStandings}
+                            registrationFormUrl={registrationFormUrl}
+                            eventStatus={scoreboardEvent?.status ?? null}
+                        />
+                    )}
+                </>
 
             );
         }
@@ -940,7 +949,7 @@ export default function App() {
             return (
 
                 <p className="verification-screen">
-                    Checking administrator sessionâ€¦
+                    Checking administrator sessionÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦
                 </p>
 
             );
@@ -1260,6 +1269,9 @@ export default function App() {
         </>
     );
 }
+
+
+
 
 
 

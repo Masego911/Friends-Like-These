@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import Countdown from "./Countdown";
 import RegistrationQR from "./RegistrationQR";
+import LandingPage from "./LandingPage";
 
 const API = "";
 
@@ -37,6 +38,7 @@ export default function App() {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [transition, setTransition] = useState<Transition>(null);
   const [connected, setConnected] = useState(true);
+  const [publicScreen, setPublicScreen] = useState<"landing" | "scoreboard">("landing");
 
   const previousRound = useRef<number | null | undefined>(undefined);
   const lastRoundScores = useRef<Standing[]>([]);
@@ -119,11 +121,35 @@ export default function App() {
 
   const activeRound = rounds.find(r => r.status === "IN_PROGRESS");
 
+  useEffect(() => {
+    if (activeRound || transition) {
+      setPublicScreen("scoreboard");
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setPublicScreen(current =>
+        current === "landing" ? "scoreboard" : "landing"
+      );
+    }, 7_000);
+
+    return () => window.clearInterval(timer);
+  }, [activeRound, transition]);
+
+
   const sorted = [...standings].sort((a, b) => {
     const aScore = activeRound ? a.roundScore ?? 0 : a.score ?? 0;
     const bScore = activeRound ? b.roundScore ?? 0 : b.score ?? 0;
     return bScore - aScore;
   });
+
+  if (publicScreen === "landing" && !activeRound && !transition && event) {
+    return (
+      <LandingPage
+        registrationDeadline={new Date(event.registrationDeadline)}
+      />
+    );
+  }
 
   return (
     <main className="tv">
@@ -140,7 +166,7 @@ export default function App() {
           ) : (
             <>
               <div className="transition-small">ROUND {transition.round}</div>
-              <div className="trophy">★</div>
+              <div className="trophy">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦</div>
               <div className="transition-status winner-label">WINNER</div>
               <div className="winner-name">{transition.name}</div>
               <div className="winner-score">{transition.score} PTS</div>
@@ -195,6 +221,7 @@ export default function App() {
             const score = activeRound
               ? team.roundScore ?? 0
               : team.score ?? 0;
+
 
             return (
               <article

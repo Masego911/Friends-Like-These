@@ -1,0 +1,242 @@
+.landing-page {
+    width: 100%;
+    min-height: 100vh;
+    background: #f4f6f8;
+    color: #111827;
+}
+
+.landing-page__banner {
+    width: 100%;
+    background: #07101f;
+    overflow: hidden;
+}
+
+.landing-page__banner img {
+    display: block;
+    width: 100%;
+    height: clamp(260px, 42vw, 560px);
+    object-fit: cover;
+    object-position: center;
+}
+
+.landing-page__content {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 48px 0 64px;
+}
+
+/* Registration introduction */
+
+.landing-registration {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(300px, .7fr);
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 48px;
+}
+
+.landing-registration__intro > span,
+.landing-rules__eyebrow {
+    display: block;
+    margin-bottom: 10px;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    color: #315bea;
+}
+
+.landing-registration__intro h1 {
+    margin: 0;
+    max-width: 700px;
+    font-size: clamp(2.3rem, 5vw, 4.6rem);
+    line-height: .98;
+    letter-spacing: -.045em;
+}
+
+.landing-registration__intro p {
+    max-width: 650px;
+    margin: 20px 0 0;
+    font-size: 1.08rem;
+    line-height: 1.65;
+    color: #5b6472;
+}
+
+.landing-registration__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.landing-registration__facts strong {
+    padding: 10px 14px;
+    border: 1px solid #d7dce4;
+    background: #ffffff;
+    font-size: .72rem;
+    letter-spacing: .08em;
+}
+
+/* Rules */
+
+.landing-rules {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+    gap: 32px;
+    align-items: start;
+}
+
+.landing-rules__content,
+.landing-rules__registration {
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #dde2e8;
+}
+
+.landing-rules__content {
+    padding: 36px;
+}
+
+.landing-rules__content h2 {
+    margin: 0 0 28px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -.035em;
+}
+
+.landing-rules ol {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.landing-rules li {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    padding: 18px 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.landing-rules li > span {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    background: #111827;
+    color: #ffffff;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.landing-rules li p {
+    margin: 4px 0 0;
+    line-height: 1.55;
+    color: #4b5563;
+}
+
+.landing-rules li strong {
+    color: #111827;
+}
+
+.landing-rules__registration {
+    position: sticky;
+    top: 24px;
+    padding: 28px;
+}
+
+.landing-register-button {
+    display: grid;
+    width: 100%;
+    min-height: 54px;
+    box-sizing: border-box;
+    margin-top: 18px;
+    padding: 14px 20px;
+    place-items: center;
+    background: #111827;
+    color: #ffffff;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: .82rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    transition:
+        transform 160ms ease,
+        background 160ms ease;
+}
+
+.landing-register-button:hover {
+    background: #315bea;
+    transform: translateY(-2px);
+}
+
+/* Tablet */
+
+@media (max-width: 900px) {
+    .landing-registration,
+    .landing-rules {
+        grid-template-columns: 1fr;
+    }
+
+    .landing-rules__registration {
+        position: static;
+    }
+}
+
+/* Phone */
+
+@media (max-width: 680px) {
+    .landing-page__banner img {
+        height: 240px;
+    }
+
+    .landing-page__content {
+        width: min(100% - 28px, 1180px);
+        padding: 30px 0 44px;
+    }
+
+    .landing-registration {
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .landing-registration__intro h1 {
+        font-size: clamp(2.35rem, 12vw, 3.4rem);
+    }
+
+    .landing-registration__facts {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .landing-registration__facts strong {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .landing-rules__content,
+    .landing-rules__registration {
+        padding: 22px;
+    }
+
+    .landing-rules li {
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .landing-rules li > span {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-register-button {
+        transition: none;
+    }
+
+    .landing-register-button:hover {
+        transform: none;
+    }
+}
